@@ -34,7 +34,7 @@ void Program::InitializeSDL()
 			SDL_WINDOWPOS_CENTERED,
 			_windowWidth,
 			_windowHeight,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
 	LogSDL("SDL_CreateWindow");
 
 	SDL_version sdlVersion;
@@ -77,7 +77,6 @@ void Program::InitializeOpenGL()
 	LogGL("glBindBuffer");
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	LogGL("glBufferData");
-
 
 	/*
 	*  TL    TR
@@ -142,7 +141,7 @@ void Program::InitializeOpenGL()
 	LogGL("glVertexAttribPointer");
 
 	auto vertexTextureCoordinateLocation = static_cast<GLuint>(glGetAttribLocation(shaderProgram,
-	                                                                              "vertexTextureCoordinate"));
+	                                                                               "vertexTextureCoordinate"));
 	LogGL("glGetAttribLocation");
 	glEnableVertexAttribArray(vertexTextureCoordinateLocation);
 	LogGL("glEnableVertexAttribArray");
