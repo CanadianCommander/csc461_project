@@ -1,14 +1,22 @@
 cmake_minimum_required (VERSION 3.10)
 project(csc461)
 
+set(CMAKE_CXX_STANDARD 11)
+
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
-include_directories(${SDL2_INCLUDE_DIRS})
+include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 
 # Add files here
-SET(SRC_FILES main.cpp)
+SET(SRC_FILES
+        main.cpp
+        debug.cpp debug.h
+        program.cpp program.h
+        graphics/graphics.h graphics/graphics.cpp graphics/_graphics.h
+        graphics/graphics_resource.h
+        graphics/texture2d.h graphics/texture2d.cpp
+        )
 
-# Prepend the /src directory to each file
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 FUNCTION(PREPEND var prefix)
     SET(listVar "")
