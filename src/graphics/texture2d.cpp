@@ -8,7 +8,7 @@ Texture2D::Texture2D(int width, int height, GLint internalFormat, GLenum format,
 {
 	if (width <= 0 || height <= 0)
 	{
-		LogError(LogChannel::GRAPHICS, "Texture width and height must both be greater than zero.");
+		LogError(LogCategory::GRAPHICS, "Texture width and height must both be greater than zero.");
 		exit(EXIT_FAILURE);
 	}
 

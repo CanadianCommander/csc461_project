@@ -18,7 +18,7 @@ extern GLenum g_glError;
 	g_glError = GL_NO_ERROR;                                                \
     while ((g_glError = glGetError()) != GL_NO_ERROR)                       \
     {                                                                       \
-        LogError(LogChannel::GRAPHICS, #TEXT " GLError: %d", g_glError);    \
+        LogError(LogCategory::GRAPHICS, #TEXT " GLError: %d", g_glError);    \
     }                                                                       \
 }
 #define LogGL(TEXT)                                                                                 \
@@ -26,11 +26,11 @@ extern GLenum g_glError;
 	g_glError = GL_NO_ERROR;                                                                        \
     if((g_glError = glGetError()) != GL_NO_ERROR)                                                   \
     {                                                                                               \
-        LogError(LogChannel::GRAPHICS, #TEXT ": %s. GLError: %d", toStatus(false), g_glError);      \
+        LogError(LogCategory::GRAPHICS, #TEXT ": %s. GLError: %d", toStatus(false), g_glError);      \
 		exit(EXIT_FAILURE);                                                                         \
     } else                                                                                          \
 	{                                                                                               \
-    	LogTrace(LogChannel::GRAPHICS, #TEXT ": %s.", toStatus(true));                              \
+    	LogVerbose(LogCategory::GRAPHICS, #TEXT ": %s.", toStatus(true));                              \
     }                                                                                               \
 }
 #endif

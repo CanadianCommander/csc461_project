@@ -8,7 +8,7 @@ class Program
 
 public:
 #ifndef NDEBUG
-	explicit Program(LogLevel logLevel = LogLevel::TRACE, LogChannel logChannel = LogChannel::ALL);
+	explicit Program(LogPriority logPriority = LogPriority::VERBOSE, LogCategory logCategory = LogCategory::ALL);
 #else
 	Program();
 #endif

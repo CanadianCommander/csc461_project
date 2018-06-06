@@ -1,48 +1,81 @@
 #include "debug.h"
 
-string logLevels[5] = {
-		"TRACE",
+string logPriorityStrings[6] = {
+		"VERBOSE",
 		"DEBUG",
 		"INFO",
 		"WARNING",
-		"ERROR"
+		"ERROR",
+		"CRITICAL"
 };
-string logLevelColors[5] = {
-		COLOR_CODE(7, 37),
-		COLOR_CODE_EXT(7, 34, 47),
-		COLOR_CODE(7, 32),
-		COLOR_CODE(7, 33),
-		COLOR_CODE(7, 31)
+string logPriorityFormats[6] = {
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 231, 232),
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 231, 28),
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 232, 27),
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(5, 232, 226),
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(5, 232, 196),
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(5, 196, 232)
+};
+
+string logCategoryStrings[3] = {
+		"All",
+		"Graphics",
+		"Network"
+};
+
+string logCategoryFormats[3] = {
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 232, 231),
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 231, 73),
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 232, 55),
 };
 
 #ifndef NDEBUG
 
-LogLevel g_logLevel = LogLevel::TRACE;
-LogChannel g_logChannels = LogChannel::ALL;
+LogPriority g_logPriority = LogPriority::VERBOSE;
+LogCategory g_logCategory = LogCategory::ALL;
 const char* g_sdlError = nullptr;
+std::vector<char> g_buffer();
 
-void LogReal(LogLevel level, LogChannel channels, const string &filePath, int line, const string &function, string format, ...)
+#define PRINT_CATEGORY_BY_INDEX(index) fprintf(stderr, "%s %3.8s %s", logCategoryFormats[(index)].c_str(), logCategoryStrings[(index)].c_str(), CSI_RESET);
+
+void LogReal(LogPriority priority, uint32_t category, const string &filePath, int line, const string &function,
+             string format, ...)
 {
 	va_list args;
-	if ((level >= g_logLevel) && ((channels & g_logChannels) != 0))
+	if ((priority >= g_logPriority) && ((category & g_logCategory) != 0))
 	{
 		va_start(args, format);
-		fprintf(stderr, "%s%s%s [%s %i] %s%s:%s\n", logLevelColors[level].c_str(), logLevels[level].c_str(),
-		        RESET_COLOR, filePath.c_str(), line, COLOR_CODE(1, 30), function.c_str(), RESET_COLOR);
+		fprintf(stderr, "%s%9s %s", logPriorityFormats[priority].c_str(),
+		        logPriorityStrings[priority].c_str(),
+		        CSI_RESET);
+		if (category == LogCategory::ALL)
+		{
+			PRINT_CATEGORY_BY_INDEX(0);
+		}
+		else
+		{
+			if ((category & LogCategory::GRAPHICS) != 0) PRINT_CATEGORY_BY_INDEX(1);
+			if ((category & LogCategory::NETWORK) != 0) PRINT_CATEGORY_BY_INDEX(2);
+		}
+
+		fprintf(stderr, " [%s, %i] %s%s;%s", filePath.c_str(), line, CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(1, 231, 232),
+		        function.c_str(),
+		        CSI_RESET);
+		fprintf(stderr, "\n");
 		format.append("\n");
 		vfprintf(stderr, format.c_str(), args);
 		va_end(args);
 	}
 }
 
-void SetLogLevelReal(LogLevel level)
+void SetLogPriorityReal(LogPriority priority)
 {
-	g_logLevel = level;
+	g_logPriority = priority;
 }
 
-void SetLogChannelsReal(LogChannel channels)
+void SetLogCategoryReal(LogCategory category)
 {
-	g_logChannels = channels;
+	g_logCategory = category;
 }
 
 #endif
