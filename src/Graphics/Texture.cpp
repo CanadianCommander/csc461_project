@@ -1,10 +1,10 @@
 
-#include "texture2d.h"
+#include "Texture.h"
 
 namespace Graphics
 {
 
-Texture2D::Texture2D(int width, int height, GLint internalFormat, GLenum format, GLenum type, const void* data) : GraphicsResource()
+Texture::Texture(uint32_t width, uint32_t height, GLint internalFormat, GLenum format, GLenum type) : GraphicsResource()
 {
 	if (width <= 0 || height <= 0)
 	{
@@ -37,11 +37,11 @@ Texture2D::Texture2D(int width, int height, GLint internalFormat, GLenum format,
 	// https://www.khronos.org/opengl/wiki/Image_Format
 	// https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
 	// https://gist.github.com/Kos/4739337
-	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, nullptr);
 	LogGL("glTexImage2D");
 }
 
-void Texture2D::SetData(void* data, uint8_t unpackAlignment)
+void Texture::SetData(void* data, uint8_t unpackAlignment)
 {
 	GLuint previousBoundTextureHandle;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, reinterpret_cast<GLint*>(&previousBoundTextureHandle));
@@ -64,6 +64,12 @@ void Texture2D::SetData(void* data, uint8_t unpackAlignment)
 		glBindTexture(GL_TEXTURE_2D, previousBoundTextureHandle);
 		LogGL("glBindTexture");
 	}
+}
+
+void* Texture::GetData(uint64_t* length)
+{
+	length = _length;
+	return _data;
 }
 
 }

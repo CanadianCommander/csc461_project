@@ -1,7 +1,10 @@
 #pragma once
 
-#include "graphics/_graphics.h"
-#include "debug.h"
+#include "Graphics/_Graphics.h"
+#include "Debug.h"
+#include "IO/ScreenCapture.h"
+
+using IO::ScreenCapture;
 
 class Program
 {
@@ -19,12 +22,13 @@ private:
 	bool _isExiting;
 	SDL_Window* _window;
 	SDL_GLContext _context;
-	Texture2D* _texture;
+	Texture* _texture;
 	GLuint _vertexArrayHandle;
 	GLuint _vertexBufferHandle;
 	GLuint _indexBufferHandle;
 	uint32_t _windowWidth;
 	uint32_t _windowHeight;
+	ScreenCapture _screenCapture;
 
 	void InitializeSDL();
 	void InitializeOpenGL();

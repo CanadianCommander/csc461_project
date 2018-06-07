@@ -1,4 +1,4 @@
-#include "debug.h"
+#include "Debug.h"
 
 string logPriorityStrings[6] = {
 		"VERBOSE",

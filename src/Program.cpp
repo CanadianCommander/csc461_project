@@ -1,5 +1,6 @@
-#include "debug.h"
-#include "program.h"
+#include "Debug.h"
+#include "Program.h"
+#include "IO/ScreenCapture.h"
 
 #ifndef NDEBUG
 
@@ -11,8 +12,7 @@ Program::Program(LogPriority logPriority, LogCategory logCategory)
 	Program::Program()
 #endif
 	InitializeSDL();
-	InitializeOpenGL();
-}
+	InitializeOpenGL(); }
 
 Program::~Program()
 {
@@ -104,7 +104,7 @@ void Program::InitializeOpenGL()
 
 	const char* vertexShaderSource =
 
-#include "graphics/shaders/textureShader.vs.glsl"
+#include "Graphics/Shaders/textureShader.vs.glsl"
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	LogGL("glCreateShader");
 	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
@@ -116,7 +116,7 @@ void Program::InitializeOpenGL()
 	LogGL("glCreateShader");
 	const char* fragmentShaderSource =
 
-#include "graphics/shaders/textureShader.fs.glsl"
+#include "Graphics/Shaders/textureShader.fs.glsl"
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
 	LogGL("glCompileSource");
 	glCompileShader(fragmentShader);
@@ -156,12 +156,15 @@ void Program::InitializeOpenGL()
 			1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 			0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f
 	};
-	_texture = new Texture2D(2, 2, GL_RGB, GL_RGB, GL_FLOAT, textureData);
+	_texture = new Texture(2, 2, GL_RGB, GL_RGB, GL_FLOAT);
+	_texture->SetData(textureData);
 
 	auto textureSamplerUniformLocation = glGetUniformLocation(shaderProgram, "textureSampler");
 	LogGL("glGetUniformLocation");
 	glUniform1i(textureSamplerUniformLocation, 0);
 	LogGL("glUniform1i");
+
+	auto newTexture = _screenCapture.GetScreenFrameBuffer();
 }
 
 void Program::Loop()
