@@ -1,40 +1,39 @@
 #include "ImageRGB.h"
 
-
 namespace IO {
 
   ImageRGB::ImageRGB(uint8_t * rawRGB, uint32_t width, uint32_t height, uint32_t len){
-    mRawRGB = new uint8_t[len];
-    memcpy(mRawRGB, rawRGB, len);
+    _rawRGB = new uint8_t[len];
+    memcpy(_rawRGB, rawRGB, len);
 
-    mRGBWidth = width;
-    mRGBHeight = height;
-    mRGBLenBytes = len;
+    _width = width;
+    _height = height;
+    _lenBytes = len;
   }
 
   ImageRGB::~ImageRGB(){
-    delete [] mRawRGB;
+    delete [] _rawRGB;
   }
 
   void * ImageRGB::GetRawDataPtr(){
-    return (void*)mRawRGB;
+    return (void*)_rawRGB;
   }
 
   std::shared_ptr<std::vector<uint8_t> > ImageRGB::GetRGBBuffer(){
     auto vec = std::make_shared<std::vector<uint8_t> >();
-    vec->assign(mRawRGB, mRawRGB + mRGBLenBytes);
+    vec->assign(_rawRGB, _rawRGB + _lenBytes);
     return vec;
   }
 
   uint32_t ImageRGB::GetWidth(){
-    return mRGBWidth;
+    return _width;
   }
 
   uint32_t ImageRGB::GetHeight(){
-    return mRGBHeight;
+    return _height;
   }
 
   uint64_t ImageRGB::GetDataByteLen() {
-    return mRGBLenBytes;
+    return _lenBytes;
   }
 }

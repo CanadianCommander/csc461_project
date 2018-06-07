@@ -1,13 +1,16 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <functional>
 #include "Image.h"
 
 namespace IO {
-  class ImageRGB: public Image {
+  class ImageBGRA: public Image {
   public:
-    ImageRGB(uint8_t * rawRGB, uint32_t width, uint32_t height, uint32_t len);
-    ~ImageRGB();
+    ImageBGRA(uint8_t * rawBGRA, uint32_t width, uint32_t height, uint32_t len);
+    ~ImageBGRA();
+
+    void SetAppleDestructor(std::function<void()> des);
 
     void * GetRawDataPtr() override;
     std::shared_ptr<std::vector<uint8_t>> GetRGBBuffer() override;
@@ -16,9 +19,10 @@ namespace IO {
     uint64_t GetDataByteLen() override;
 
   private:
-    uint8_t* _rawRGB;
+    uint8_t* _rawBGRA;
     uint32_t _lenBytes;
     uint32_t _width;
     uint32_t _height;
+    std::function<void()>  _aDestruct;
   };
 }

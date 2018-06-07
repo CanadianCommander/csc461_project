@@ -270,7 +270,7 @@ void Program::HandleEvents()
 
 void Program::UpdateTextures(){
   std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
-  _texture->UploadData((void*)img->GetRawDataPtr());
+  _texture->UploadData(img->GetRGBBuffer());
 }
 
 void Program::Draw()

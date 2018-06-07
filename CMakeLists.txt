@@ -31,6 +31,7 @@ SET(SRC_FILES
         #io
         IO/ScreenCapture.cpp
         IO/ImageRGB.cpp
+        IO/ImageBGRA.cpp
         )
 
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)

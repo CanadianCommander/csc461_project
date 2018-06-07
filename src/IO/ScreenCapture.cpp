@@ -1,5 +1,6 @@
 #include "ScreenCapture.h"
 #include "ImageRGB.h"
+#include "ImageBGRA.h"
 
 #ifdef __APPLE__
   #include <CoreGraphics/CoreGraphics.h>
@@ -57,29 +58,11 @@ namespace IO {
   	const unsigned char* raw = CFDataGetBytePtr(data);
   	auto len = (uint32_t)CFDataGetLength(data);
 
-  	//strip alpha
-  	unsigned char * rawRGB = new unsigned char[len];
-  	uint32_t rgbIndex = 0;
-  	for (uint32_t i = 0; i < len; i += 4)
-  	{
-  		rawRGB[rgbIndex++] = raw[i];
-  		rawRGB[rgbIndex++] = raw[i + 1];
-  		rawRGB[rgbIndex++] = raw[i + 2];
-  	}
-
-  	//flip BGR to RGB
-  	for (uint32_t i = 0; i < len; i += 3)
-  	{
-  		uint8_t tmp = rawRGB[i];
-  		rawRGB[i] = rawRGB[i + 2];
-  		rawRGB[i + 2] = tmp;
-  	}
-
-  	auto rgbImg = std::make_shared<ImageRGB>((uint8_t*)rawRGB, CGImageGetWidth(img), CGImageGetHeight(img), len);
-    delete[] rawRGB;
-  	CFRelease(data);
-    CFRelease(img);
-    return rgbImg;
+  	auto bgrImg = std::make_shared<ImageBGRA>((uint8_t*)raw, CGImageGetWidth(img), CGImageGetHeight(img), len);
+    bgrImg->SetAppleDestructor([img, data] () -> void {CFRelease(data); CFRelease(img);});
+  	//CFRelease(data);
+    //CFRelease(img);
+    return bgrImg;
 
   #elif __linux__
   	GdkPixbuf * pix = gdk_pixbuf_get_from_window(_desktop, 0, 0, _desktopWidth, _desktopHeight);
