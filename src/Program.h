@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics/_Graphics.h"
+#include "Graphics/Graphics.h"
 #include "Debug.h"
 #include "IO/ScreenCapture.h"
 

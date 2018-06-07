@@ -19,12 +19,11 @@ include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 # Add files here
 SET(SRC_FILES
         main.cpp
-        Debug.cpp Debug.h
-        Program.cpp Program.h
-        Graphics/Graphics.h Graphics/Graphics.cpp Graphics/_Graphics.h
-        Graphics/GraphicsResource.h
-        Graphics/Texture.h Graphics/Texture.cpp
-        IO/ScreenCapture.h IO/ScreenCapture.cpp
+        Debug.cpp
+        Program.cpp
+        Graphics/Graphics.cpp
+        Graphics/Texture.cpp
+        IO/ScreenCapture.cpp
         )
 
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -38,6 +37,8 @@ ENDFUNCTION(PREPEND)
 PREPEND(SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR} ${SRC_FILES})
 
 add_executable(csc461 ${SRC_FILES})
+set_target_properties(csc461 PROPERTIES SUFFIX ".a")
+set( EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 SET(LIBRARIES ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES})
 if(APPLE)
