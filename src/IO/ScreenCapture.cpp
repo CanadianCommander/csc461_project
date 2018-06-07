@@ -78,6 +78,7 @@ namespace IO {
   	auto rgbImg = std::make_shared<ImageRGB>((uint8_t*)rawRGB, CGImageGetWidth(img), CGImageGetHeight(img), len);
     delete[] rawRGB;
   	CFRelease(data);
+    CFRelease(img);
     return rgbImg;
 
   #elif __linux__
