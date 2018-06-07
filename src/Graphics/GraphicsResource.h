@@ -8,6 +8,13 @@ class GraphicsResource
 {
 
 public:
+  GraphicsResource(){
+  };
+
+  GraphicsResource(const GraphicsResource &other){
+    _handle = other._handle;
+  }
+
 	GLuint Handle()
 	{ return _handle; }
 

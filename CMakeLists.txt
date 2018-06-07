@@ -18,12 +18,19 @@ include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 
 # Add files here
 SET(SRC_FILES
+
+        #main
         main.cpp
         Debug.cpp
         Program.cpp
+
+        #graphics
         Graphics/Graphics.cpp
         Graphics/Texture.cpp
+
+        #io
         IO/ScreenCapture.cpp
+        IO/ImageRGB.cpp
         )
 
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)

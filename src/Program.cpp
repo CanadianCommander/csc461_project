@@ -156,15 +156,16 @@ void Program::InitializeOpenGL()
 			1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 			0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f
 	};
-	_texture = new Texture(2, 2, GL_RGB, GL_RGB, GL_FLOAT);
-	_texture->SetData(textureData);
+
+  std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
+
+	_texture = new Graphics::Texture(img->GetWidth(), img->GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
+	_texture->UploadData(img->GetRGBBuffer());
 
 	auto textureSamplerUniformLocation = glGetUniformLocation(shaderProgram, "textureSampler");
 	LogGL("glGetUniformLocation");
 	glUniform1i(textureSamplerUniformLocation, 0);
 	LogGL("glUniform1i");
-
-	auto newTexture = _screenCapture.GetScreenFrameBuffer();
 }
 
 void Program::Loop()
@@ -177,6 +178,7 @@ void Program::Loop()
 
 void Program::Frame()
 {
+  UpdateTextures();
 	HandleEvents();
 	Draw();
 }
@@ -266,10 +268,16 @@ void Program::HandleEvents()
 	}
 }
 
+void Program::UpdateTextures(){
+  std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
+  _texture->UploadData((void*)img->GetRawDataPtr());
+}
+
 void Program::Draw()
 {
 	glClearColor(0, 0, 0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
+  _texture->BindTexture();
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 

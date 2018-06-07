@@ -1,16 +1,12 @@
 #pragma once
+#include "Image.h"
 
-#ifdef __APPLE__
-
-#include <CoreGraphics/CoreGraphics.h>
-
-#elif __linux__
-#include <gdk/gdk.h>
+//GTK 2 forward defs
+#ifdef __linux__
+  typedef struct _GdkWindow GdkWindow;
+  typedef struct _GdkPixbuf GdkPixbuf;
 #endif
 
-#include "../Graphics/Texture.h"
-
-using Graphics::Texture;
 
 namespace IO {
 
@@ -19,7 +15,7 @@ class ScreenCapture
 public:
 	ScreenCapture();
 
-	std::shared_ptr<Texture> GetScreenFrameBuffer();
+	std::shared_ptr<Image> GetScreenFrameBuffer();
 
 protected:
 	void QueryDisplayInformation();
@@ -37,4 +33,3 @@ private:
 };
 
 }
-

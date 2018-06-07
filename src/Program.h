@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics/Graphics.h"
+#include "Graphics/Texture.h"
 #include "Debug.h"
 #include "IO/ScreenCapture.h"
 
@@ -22,7 +23,7 @@ private:
 	bool _isExiting;
 	SDL_Window* _window;
 	SDL_GLContext _context;
-	Texture* _texture;
+	Graphics::Texture* _texture;
 	GLuint _vertexArrayHandle;
 	GLuint _vertexBufferHandle;
 	GLuint _indexBufferHandle;
@@ -34,6 +35,7 @@ private:
 	void InitializeOpenGL();
 	void Frame();
 	void HandleEvents();
+  void UpdateTextures();
 	void Draw();
 
 };
