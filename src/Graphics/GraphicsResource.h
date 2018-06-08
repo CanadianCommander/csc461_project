@@ -18,6 +18,13 @@ public:
 	GLuint Handle()
 	{ return _handle; }
 
+  GraphicsResource& operator=(const GraphicsResource &other){
+    if(this != &other){
+      _handle = other._handle;
+    }
+    return *this;
+  }
+
 	bool operator==(const GraphicsResource &other) const
 	{
 		return _handle == other._handle;

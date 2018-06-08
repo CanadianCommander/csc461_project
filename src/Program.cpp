@@ -159,8 +159,8 @@ void Program::InitializeOpenGL()
 
   std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
 
-	_texture = new Graphics::Texture(img->GetWidth(), img->GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
-	_texture->UploadData(img->GetRGBBuffer());
+	_texture = new Graphics::Texture(*img.get());
+	_texture->UploadData(img->GetRawDataPtr());
 
 	auto textureSamplerUniformLocation = glGetUniformLocation(shaderProgram, "textureSampler");
 	LogGL("glGetUniformLocation");
@@ -270,7 +270,7 @@ void Program::HandleEvents()
 
 void Program::UpdateTextures(){
   std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
-  _texture->UploadData(img->GetRGBBuffer());
+  _texture->UploadData(img->GetRawDataPtr());
 }
 
 void Program::Draw()

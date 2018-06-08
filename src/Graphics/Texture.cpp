@@ -26,20 +26,36 @@ namespace Graphics{
   	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   	LogGL("gl texture parameters set");
 
-  	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, nullptr);
   	LogGL("gl GPU texture allocated");
   }
 
+  Texture::Texture(IO::Image & img){
+    //DD dispatch
+    img.ConstructTexture(this);
+  }
+
+  Texture::Texture(IO::ImageRGB &rgbImg) : Texture(rgbImg.GetWidth(), rgbImg.GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE) {
+  }
+
+  Texture::Texture(IO::ImageBGRA &bgraImg) : Texture(bgraImg.GetWidth(), bgraImg.GetHeight(), GL_RGB, GL_BGRA, GL_UNSIGNED_BYTE) {
+  }
+
   Texture::Texture(const Texture &other): GraphicsResource(other){
-    _width          = other._width;
-    _height         = other._height;
-    _internalFormat = other._internalFormat;
-    _format         = other._format;
-    _type           = other._type;
+    TextureCopy(other);
+  }
+
+  Texture& Texture::operator=(const Texture &other){
+    if(this != &other){
+      GraphicsResource::operator=(other);
+      TextureCopy(other);
+    }
+    return *this;
   }
 
   void Texture::UploadData(void* data, uint8_t unpackAlignment){
   	GLuint previousBoundTextureHandle;
+
   	glGetIntegerv(GL_TEXTURE_BINDING_2D, reinterpret_cast<GLint*>(&previousBoundTextureHandle));
   	LogGL("glGetInteger");
 
@@ -69,5 +85,13 @@ namespace Graphics{
   void Texture::BindTexture(){
 		glBindTexture(GL_TEXTURE_2D, _handle);
     LogGL("gl texture bound");
+  }
+
+  void Texture::TextureCopy(const Texture &src){
+    _width          = src._width;
+    _height         = src._height;
+    _internalFormat = src._internalFormat;
+    _format         = src._format;
+    _type           = src._type;
   }
 }

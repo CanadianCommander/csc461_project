@@ -1,4 +1,5 @@
 #include "ImageRGB.h"
+#include "../Graphics/Texture.h"
 
 namespace IO {
 
@@ -35,5 +36,9 @@ namespace IO {
 
   uint64_t ImageRGB::GetDataByteLen() {
     return _lenBytes;
+  }
+
+  void ImageRGB::ConstructTexture(Graphics::Texture * t){
+    *t = Graphics::Texture(*this);
   }
 }

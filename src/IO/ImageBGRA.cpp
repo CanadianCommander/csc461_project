@@ -1,4 +1,5 @@
 #include "ImageBGRA.h"
+#include "../Graphics/Texture.h"
 
 namespace IO {
 
@@ -47,5 +48,9 @@ namespace IO {
 
   uint64_t ImageBGRA::GetDataByteLen() {
     return _lenBytes;
+  }
+
+  void ImageBGRA::ConstructTexture(Graphics::Texture * t){
+    *t = Graphics::Texture(*this);
   }
 }

@@ -2,6 +2,9 @@
 #include <vector>
 #include <memory>
 
+namespace Graphics{
+  class Texture;
+}
 
 namespace IO {
 
@@ -12,6 +15,7 @@ namespace IO {
     virtual uint32_t GetWidth() = 0;
     virtual uint32_t GetHeight() = 0;
     virtual uint64_t GetDataByteLen() = 0;
+    virtual void ConstructTexture(Graphics::Texture * t) = 0;
 
   };
 }

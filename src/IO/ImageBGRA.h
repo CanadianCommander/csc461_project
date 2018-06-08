@@ -17,6 +17,8 @@ namespace IO {
     uint32_t GetWidth() override;
     uint32_t GetHeight() override;
     uint64_t GetDataByteLen() override;
+    void ConstructTexture(Graphics::Texture * t) override;
+
 
   private:
     uint8_t* _rawBGRA;
