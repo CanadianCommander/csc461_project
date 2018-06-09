@@ -1,8 +1,10 @@
 #pragma once
+
+#include <memory>
 #include "Image.h"
 
-//GTK 2 forward defs
-#ifdef __linux__
+#ifdef __APPLE__
+#elif __linux__
   typedef struct _GdkWindow GdkWindow;
   typedef struct _GdkPixbuf GdkPixbuf;
 #endif
@@ -14,22 +16,15 @@ class ScreenCapture
 {
 public:
 	ScreenCapture();
-
 	std::shared_ptr<Image> GetScreenFrameBuffer();
-
-protected:
-	void QueryDisplayInformation();
 
 private:
 #ifdef __linux__
-	GdkWindow * _desktop;
+	GdkWindow * _displayHandle;
 #elif __APPLE__
-	uint32_t _desktop;
+	uint32_t _displayHandle;
+
 #endif
-	int _desktopX;
-	int _desktopY;
-	int _desktopWidth;
-	int _desktopHeight;
 };
 
 }

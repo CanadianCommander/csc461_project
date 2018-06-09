@@ -28,7 +28,6 @@
 *.lib
 
 # Executables
-*.exe
 *.out
 *.app
 
@@ -38,5 +37,9 @@ CMakeFiles/
 Makefile
 cmake_install.cmake
 
-build/
-bin/
+# Build folders
+[Bb]uild/
+[Bb]in/
+
+# JetBrains
+.idea/

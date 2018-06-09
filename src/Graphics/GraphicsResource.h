@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics.h"
+#include "GraphicsDebug.h"
 
 namespace Graphics {
 
@@ -8,22 +8,22 @@ class GraphicsResource
 {
 
 public:
-  GraphicsResource(){
-  };
-
-  GraphicsResource(const GraphicsResource &other){
-    _handle = other._handle;
-  }
+	GraphicsResource(const GraphicsResource &other)
+	{
+		_handle = other._handle;
+	}
 
 	GLuint Handle()
 	{ return _handle; }
 
-  GraphicsResource& operator=(const GraphicsResource &other){
-    if(this != &other){
-      _handle = other._handle;
-    }
-    return *this;
-  }
+	GraphicsResource &operator=(const GraphicsResource &other)
+	{
+		if (this != &other)
+		{
+			_handle = other._handle;
+		}
+		return *this;
+	}
 
 	bool operator==(const GraphicsResource &other) const
 	{
@@ -36,6 +36,11 @@ public:
 	};
 
 protected:
-	GLuint _handle;
+	GraphicsResource()
+	{
+		_handle = 0;
+	};
+
+	GLuint _handle{};
 };
 };

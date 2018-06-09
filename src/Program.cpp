@@ -1,18 +1,17 @@
 #include "Debug.h"
 #include "Program.h"
-#include "IO/ScreenCapture.h"
 
-#ifndef NDEBUG
-
+#if NDEBUG
+Program::Program()
+#else
 Program::Program(LogPriority logPriority, LogCategory logCategory)
+#endif
 {
 	SetLogPriority(logPriority);
 	SetLogCategory(logCategory);
-#else
-	Program::Program()
-#endif
 	InitializeSDL();
-	InitializeOpenGL(); }
+	InitializeOpenGL();
+}
 
 Program::~Program()
 {
@@ -103,46 +102,20 @@ void Program::InitializeOpenGL()
 	LogGL("glBufferData");
 
 	const char* vertexShaderSource =
-
 #include "Graphics/Shaders/textureShader.vs.glsl"
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	LogGL("glCreateShader");
-	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-	LogGL("glCompileSource");
-	glCompileShader(vertexShader);
-	LogGL("glCompileShader");
-
-	auto fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	LogGL("glCreateShader");
 	const char* fragmentShaderSource =
 
 #include "Graphics/Shaders/textureShader.fs.glsl"
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-	LogGL("glCompileSource");
-	glCompileShader(fragmentShader);
-	LogGL("glCompileShader");
 
-	auto shaderProgram = glCreateProgram();
-	LogGL("glCompileProgram");
-	glAttachShader(shaderProgram, vertexShader);
-	LogGL("glAttachShader");
-	glAttachShader(shaderProgram, fragmentShader);
-	LogGL("glAttachShader");
-	glLinkProgram(shaderProgram);
-	LogGL("glLinkProgram");
-	glUseProgram(shaderProgram);
-	LogGL("glUseProgram");
+	_shaderProgram = new ShaderProgram(vertexShaderSource, fragmentShaderSource);
 
-	auto vertexPositionAttributeLocation = static_cast<GLuint>(glGetAttribLocation(shaderProgram, "vertexPosition"));
-	LogGL("glGetAttribLocation");
+	auto vertexPositionAttributeLocation = _shaderProgram->Attributes()["vertexPosition"];
 	glEnableVertexAttribArray(vertexPositionAttributeLocation);
 	LogGL("glEnableVertexAttribArray");
 	glVertexAttribPointer(vertexPositionAttributeLocation, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), nullptr);
 	LogGL("glVertexAttribPointer");
 
-	auto vertexTextureCoordinateLocation = static_cast<GLuint>(glGetAttribLocation(shaderProgram,
-	                                                                               "vertexTextureCoordinate"));
-	LogGL("glGetAttribLocation");
+	auto vertexTextureCoordinateLocation = _shaderProgram->Attributes()["vertexTextureCoordinate"];
 	glEnableVertexAttribArray(vertexTextureCoordinateLocation);
 	LogGL("glEnableVertexAttribArray");
 	glVertexAttribPointer(vertexTextureCoordinateLocation, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat),
@@ -152,41 +125,63 @@ void Program::InitializeOpenGL()
 	glActiveTexture(GL_TEXTURE0);
 	LogGL("glActiveTexture");
 
-	float textureData[] = {
-			1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f
-	};
-
-  std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
-
-	_texture = new Graphics::Texture(*img.get());
-	_texture->UploadData(img->GetRawDataPtr());
-
-	auto textureSamplerUniformLocation = glGetUniformLocation(shaderProgram, "textureSampler");
-	LogGL("glGetUniformLocation");
+	auto textureSamplerUniformLocation = _shaderProgram->Uniforms()["textureSampler"];
 	glUniform1i(textureSamplerUniformLocation, 0);
 	LogGL("glUniform1i");
+
+	auto image = _screenCapture.GetScreenFrameBuffer();
+	_texture = new Texture(*image);
 }
 
 void Program::Loop()
 {
+	_previousFrameTimePoint = Clock::now();
 	while (!_isExiting)
 	{
-		Frame();
+		auto currentFrameTimePoint = Clock::now();
+		std::chrono::duration<float, std::milli> frameTime = currentFrameTimePoint - _previousFrameTimePoint;
+		_previousFrameTimePoint = currentFrameTimePoint;
+
+		if (frameTime > _oneSecondDuration)
+		{
+			frameTime = _oneSecondDuration;
+		}
+		_deltaTime += frameTime;
+
+		while (_deltaTime >= _stepTime)
+		{
+			_deltaTime -= _stepTime;
+			Frame();
+			_framesCounter++;
+		}
+
+		_framePerSecondTime += frameTime;
+		if (_framePerSecondTime > _oneSecondDuration)
+		{
+			_framePerSecondTime -= _oneSecondDuration;
+			_framesPerSecond = _framesCounter;
+			_framesCounter = 0;
+
+			char x[10];
+			sprintf(x, "FPS: %d", _framesPerSecond);
+			SDL_SetWindowTitle(_window, x);
+		}
 	}
 }
 
 void Program::Frame()
 {
-  UpdateTextures();
+	UpdateTextures();
 	HandleEvents();
 	Draw();
 }
 
-void PrintEvent(const SDL_Event * event)
+void PrintEvent(const SDL_Event* event)
 {
-	if (event->type == SDL_WINDOWEVENT) {
-		switch (event->window.event) {
+	if (event->type == SDL_WINDOWEVENT)
+	{
+		switch (event->window.event)
+		{
 			case SDL_WINDOWEVENT_SHOWN:
 				SDL_Log("Window %d shown", event->window.windowID);
 				break;
@@ -268,16 +263,16 @@ void Program::HandleEvents()
 	}
 }
 
-void Program::UpdateTextures(){
-  std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
-  _texture->UploadData(img->GetRawDataPtr());
+void Program::UpdateTextures()
+{
+	auto image = _screenCapture.GetScreenFrameBuffer();
+	_texture->UploadData(image->GetData());
 }
 
 void Program::Draw()
 {
 	glClearColor(0, 0, 0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
-  _texture->BindTexture();
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 

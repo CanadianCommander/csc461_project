@@ -17,14 +17,16 @@ string logPriorityFormats[6] = {
 		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(5, 196, 232)
 };
 
-string logCategoryStrings[3] = {
+string logCategoryStrings[4] = {
 		"All",
+		"IO",
 		"Graphics",
 		"Network"
 };
 
-string logCategoryFormats[3] = {
+string logCategoryFormats[4] = {
 		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 232, 231),
+		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 232, 220),
 		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 231, 73),
 		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 232, 55),
 };
@@ -34,19 +36,20 @@ string logCategoryFormats[3] = {
 LogPriority g_logPriority = LogPriority::VERBOSE;
 LogCategory g_logCategory = LogCategory::ALL;
 const char* g_sdlError = nullptr;
-std::vector<char> g_buffer();
 
 #define PRINT_CATEGORY_BY_INDEX(index) fprintf(stderr, "%s %3.8s %s", logCategoryFormats[(index)].c_str(), logCategoryStrings[(index)].c_str(), CSI_RESET);
 
-void LogReal(LogPriority priority, uint32_t category, const string &filePath, int line, const string &function,
+void LogReal(LogPriority priority, LogCategory category, const string &filePath, int line, const string &function,
              string format, ...)
 {
 	va_list args;
-	if ((priority >= g_logPriority) && ((category & g_logCategory) != 0))
+	auto priorityu = (uint32_t)priority;
+	auto categoryu = (uint32_t)category;
+	if ((priorityu >= (uint32_t)g_logPriority) && ((categoryu & (uint32_t)g_logCategory) != 0))
 	{
 		va_start(args, format);
-		fprintf(stderr, "%s%9s %s", logPriorityFormats[priority].c_str(),
-		        logPriorityStrings[priority].c_str(),
+		fprintf(stderr, "%s%9s %s", logPriorityFormats[priorityu].c_str(),
+		        logPriorityStrings[priorityu].c_str(),
 		        CSI_RESET);
 		if (category == LogCategory::ALL)
 		{
@@ -54,8 +57,9 @@ void LogReal(LogPriority priority, uint32_t category, const string &filePath, in
 		}
 		else
 		{
-			if ((category & LogCategory::GRAPHICS) != 0) PRINT_CATEGORY_BY_INDEX(1);
-			if ((category & LogCategory::NETWORK) != 0) PRINT_CATEGORY_BY_INDEX(2);
+			if ((categoryu & (uint32_t)LogCategory::IO) != 0) PRINT_CATEGORY_BY_INDEX(1);
+			if ((categoryu & (uint32_t)LogCategory::GRAPHICS) != 0) PRINT_CATEGORY_BY_INDEX(2);
+			if ((categoryu & (uint32_t)LogCategory::NETWORK) != 0) PRINT_CATEGORY_BY_INDEX(3);
 		}
 
 		fprintf(stderr, " [%s, %i] %s%s;%s", filePath.c_str(), line, CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(1, 231, 232),
