@@ -20,8 +20,8 @@ namespace IO {
 	  }
 
 	  //fetch system default screen
-	  mDesktop = gdk_get_default_root_window();
-	  if(!mDesktop){
+	  _desktop = gdk_get_default_root_window();
+	  if(!_desktop){
 		    throw std::runtime_error("Could not fetch root window!");
 	  }
   #endif
@@ -39,8 +39,8 @@ namespace IO {
   	_desktopHeight = (int)(bounds.size.height);
 
   #elif __linux__
-  	_desktopWidth = gdk_window_get_width(mDesktop);
-  	_desktopHeight= gdk_window_get_height(mDesktop);
+  	_desktopWidth = gdk_window_get_width(_desktop);
+  	_desktopHeight= gdk_window_get_height(_desktop);
   	gdk_window_get_origin(_desktop, &_desktopX, &_desktopY);
   #endif
   }
@@ -67,9 +67,10 @@ namespace IO {
   #elif __linux__
   	GdkPixbuf * pix = gdk_pixbuf_get_from_window(_desktop, 0, 0, _desktopWidth, _desktopHeight);
   	  if(pix){
-  		return std::make_shared<ImageRGB>((uint8_t *)gdk_pixbuf_read_pixels(pix),
-  				  gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), gdk_pixbuf_get_byte_lenght(pix));
-
+		    auto res = std::make_shared<ImageRGB>((uint8_t *)gdk_pixbuf_read_pixels(pix),
+  				  gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), gdk_pixbuf_get_byte_length(pix));
+        g_object_unref(pix);
+        return res;
   	  }
   #endif
 

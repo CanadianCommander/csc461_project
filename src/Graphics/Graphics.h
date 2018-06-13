@@ -1,7 +1,13 @@
 #pragma once
 
 #include <SDL.h>
-#include <OpenGl/gl3.h>
+#ifdef __APPLE__
+	#include <OpenGl/gl3.h>
+#elif __linux__
+	#define GL_GLEXT_PROTOTYPES
+	#include <GL/gl.h>
+#endif
+
 //#include <glm/glm.hpp>
 //#include <glm/gtc/matrix_transform.hpp>
 //#include <glm/gtc/type_ptr.hpp>

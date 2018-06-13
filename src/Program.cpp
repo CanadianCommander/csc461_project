@@ -12,7 +12,9 @@ Program::Program(LogPriority logPriority, LogCategory logCategory)
 	Program::Program()
 #endif
 	InitializeSDL();
-	InitializeOpenGL(); }
+	InitializeOpenGL();
+	_isExiting = false;
+}
 
 Program::~Program()
 {
@@ -205,6 +207,7 @@ void PrintEvent(const SDL_Event * event)
 				SDL_Log("Window %d resized to %dx%d",
 				        event->window.windowID, event->window.data1,
 				        event->window.data2);
+				glViewport(0,0,event->window.data1, event->window.data2);
 				break;
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
 				SDL_Log("Window %d size changed to %dx%d",
