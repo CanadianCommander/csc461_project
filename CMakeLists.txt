@@ -17,6 +17,12 @@ find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 
+# 3rd party libraries
+include_directories("./3rdParty/libde265/")
+add_subdirectory("3rdParty/libde265/")
+# 3rd party lib names
+SET(ENCODER_LIBRARIES de265)
+
 # Add files here
 SET(SRC_FILES
 
@@ -33,6 +39,10 @@ SET(SRC_FILES
         IO/ScreenCapture.cpp
         IO/ImageRGB.cpp
         IO/ImageBGRA.cpp
+
+        #codec
+        Codec/Codec.cpp
+        Codec/Transcoders/DE265Transcoder.cpp
         )
 
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -49,7 +59,7 @@ add_executable(csc461 ${SRC_FILES})
 set_target_properties(csc461 PROPERTIES SUFFIX ".a")
 set( EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
-SET(LIBRARIES ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES})
+SET(LIBRARIES ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${ENCODER_LIBRARIES})
 if(APPLE)
     SET(LIBRARIES ${LIBRARIES} ${CORE_GRAPHICS_LIBRARY} ${CORE_FOUNDATION_LIBRARY})
 elseif(UNIX)

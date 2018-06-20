@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "Program.h"
 #include "IO/ScreenCapture.h"
+#include "Codec/Transcoders/DE265Transcoder.h"
 
 #ifndef NDEBUG
 
@@ -14,6 +15,8 @@ Program::Program(LogPriority logPriority, LogCategory logCategory)
 	InitializeSDL();
 	InitializeOpenGL();
 	_isExiting = false;
+	_transcoder = std::make_shared<Codec::DE265Transcoder>();
+	_transcoder->InitEncoder();
 }
 
 Program::~Program()
@@ -273,6 +276,7 @@ void Program::HandleEvents()
 
 void Program::UpdateTextures(){
   std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
+	_transcoder->FeedFrame(img);
   _texture->UploadData(img->GetRawDataPtr());
 }
 

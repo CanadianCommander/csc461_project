@@ -1,9 +1,11 @@
 #pragma once
+#include <memory>
 
 #include "Graphics/Graphics.h"
 #include "Graphics/Texture.h"
 #include "Debug.h"
 #include "IO/ScreenCapture.h"
+#include "Codec/Transcoders/DE265Transcoder.h"
 
 using IO::ScreenCapture;
 
@@ -30,6 +32,7 @@ private:
 	uint32_t _windowWidth;
 	uint32_t _windowHeight;
 	ScreenCapture _screenCapture;
+	std::shared_ptr<Codec::Transcoder> _transcoder;
 
 	void InitializeSDL();
 	void InitializeOpenGL();
