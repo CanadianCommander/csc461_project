@@ -20,8 +20,9 @@ include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 # 3rd party libraries
 include_directories("./3rdParty/libde265/")
 add_subdirectory("3rdParty/libde265/")
+include_directories("./3rdParty/openh264/codec/api/svc/")
 # 3rd party lib names
-SET(ENCODER_LIBRARIES de265)
+SET(ENCODER_LIBRARIES de265 openh264.so.4)
 
 # Add files here
 SET(SRC_FILES
@@ -43,6 +44,7 @@ SET(SRC_FILES
         #codec
         Codec/Codec.cpp
         Codec/Transcoders/DE265Transcoder.cpp
+        Codec/Transcoders/Open264Transcoder.cpp
         )
 
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)

@@ -1,7 +1,7 @@
 #include "Debug.h"
 #include "Program.h"
 #include "IO/ScreenCapture.h"
-#include "Codec/Transcoders/DE265Transcoder.h"
+#include "Codec/Transcoders/Open264Transcoder.h"
 
 #ifndef NDEBUG
 
@@ -15,7 +15,7 @@ Program::Program(LogPriority logPriority, LogCategory logCategory)
 	InitializeSDL();
 	InitializeOpenGL();
 	_isExiting = false;
-	_transcoder = std::make_shared<Codec::DE265Transcoder>();
+	_transcoder = std::make_shared<Codec::Open264Transcoder>();
 	_transcoder->InitEncoder();
 }
 
