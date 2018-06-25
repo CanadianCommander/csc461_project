@@ -9,6 +9,7 @@ namespace Codec {
   public:
     DE265Packet(std::shared_ptr<en265_packet> pack){dePacket = pack;};
     uint8_t * GetRawData() override {return (uint8_t *)dePacket->data;}
+    uint32_t  GetRawDataLen() override {return 0;}
 
   private:
     std::shared_ptr<en265_packet> dePacket;

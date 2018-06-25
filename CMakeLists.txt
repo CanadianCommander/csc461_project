@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.10)
 project(csc461)
-add_definitions(-std=gnu++14)
+add_definitions(-std=gnu++14 -Ofast)
 
 if(APPLE)
     find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
@@ -45,6 +45,7 @@ SET(SRC_FILES
         Codec/Codec.cpp
         Codec/Transcoders/DE265Transcoder.cpp
         Codec/Transcoders/Open264Transcoder.cpp
+        Codec/Packets/OpenH264Packet.cpp
         )
 
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)

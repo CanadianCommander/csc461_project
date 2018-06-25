@@ -1,7 +1,9 @@
 #include "Program.h"
 
+
 int main(int argc, char *args[])
 {
+	
 #ifndef NDEBUG
 	//TODO: Use command line arguments to pass log level and log channels for debug builds.
 #endif

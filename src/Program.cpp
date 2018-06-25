@@ -17,6 +17,7 @@ Program::Program(LogPriority logPriority, LogCategory logCategory)
 	_isExiting = false;
 	_transcoder = std::make_shared<Codec::Open264Transcoder>();
 	_transcoder->InitEncoder();
+	_transcoder->InitDecoder();
 }
 
 Program::~Program()
@@ -277,7 +278,21 @@ void Program::HandleEvents()
 void Program::UpdateTextures(){
   std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
 	_transcoder->FeedFrame(img);
-  _texture->UploadData(img->GetRawDataPtr());
+	try{
+		auto pk = _transcoder->NextPacket();
+		_transcoder->FeedPacket(pk.get());
+
+		try{
+			auto imgDec = _transcoder->NextImage();
+			_texture->UploadData(imgDec->GetRawDataPtr());
+		}
+		catch(Codec::DecoderException de){
+
+		}
+	}
+	catch(Codec::EncoderException ee){
+
+	}
 }
 
 void Program::Draw()

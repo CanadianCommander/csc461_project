@@ -21,6 +21,10 @@ namespace Codec {
     std::shared_ptr<Packet> NextPacket() override;
 
     //decoder functions
+    //---- decoder overrides ----
+    virtual void InitDecoder() {};
+    virtual void FeedPacket(Packet * pk) {};
+    virtual std::shared_ptr<IO::Image> NextImage() {return nullptr;};
 
   private:
     de265_image * _ImageToDe265Image(std::shared_ptr<IO::Image> img);
