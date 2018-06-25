@@ -55,7 +55,7 @@ namespace Codec{
     if(_encoderDelayInit){
       LogCodec("Doing delayed encoder init", false);
       _encoderDelayInit = false;
-      _SetEncoderOptions(EUsageType::SCREEN_CONTENT_REAL_TIME, 60.0f,
+      _SetEncoderOptions(SCREEN_CONTENT_REAL_TIME, 24.0f,
                           src->GetWidth(), src->GetHeight());
     }
 
@@ -95,6 +95,7 @@ namespace Codec{
     params.iPicWidth = width;
     params.iPicHeight = height;
     params.iTargetBitrate = targetBitrate;
+    params.iRCMode = RC_QUALITY_MODE;
     if(_encoder->Initialize(&params)){
       LogCodec("Error Initializing Encoder", true);
       throw EncoderException("Error Initializing Encoder");
@@ -132,7 +133,7 @@ namespace Codec{
     pic->iPicWidth = img->GetWidth();
     pic->iPicHeight = img->GetHeight();
     pic->iColorFormat = videoFormatI420;
-    pic->iStride[0] = pic->iPicWidth;
+    pic->iStride[0] = pic->iPicWidth + 64; // <--- wtf hack to dial in picture??? TODO figure this shit out
     pic->iStride[1] = pic->iStride[2] = pic->iPicWidth >> 1;
     pic->pData[0] = &(*rgbData.get())[0];
     pic->pData[1] = pic->pData[0];
@@ -141,7 +142,7 @@ namespace Codec{
     memset(*(pic->pData + 2), 0, pic->iStride[2]);
 
     for(int i =0; i < rgbData->size(); i +=3){
-      int num = (0.299*(rgbData.get()->at(i))) + (0.587*(rgbData.get()->at(i+1))) + (0.114*(rgbData.get()->at(i+2)));
+      int num = (0.299*(rgbData.get()->at(i))) + (0.587*(rgbData.get()->at(i+1))) + (0.114*(rgbData.get()->at(i+2))) + 16;
       num = num >= 0 ? num : 0;
       num = num <= 255 ? num: 255;
       pic->pData[0][i/3] = num;
@@ -155,7 +156,7 @@ namespace Codec{
 
     LogCodec("YUV to RGB with\n- width: %d\n- height: %d", false, w, h);
     for(int i =0; i < w*h*3; i += 3){
-      int num = yuvData[0][i/3];
+      int num = 1.164*(yuvData[0][i/3]-16);
       num = num >= 0 ? num : 0;
       num = num <= 255 ? num: 255;
       rgbBuffer[i] = num;
@@ -167,7 +168,6 @@ namespace Codec{
     //rgbBuffer is "&rgbBuffer[0]" instead of just "rgbBuffer" because template madness
     // throws error in the later case, even though this case does work with the vanilla "new ..."
     auto res = std::make_shared<IO::ImageRGB>(&rgbBuffer[0], w, h, w*h*3);
-    rgbBuffer[0] = 42;
     return res;
   }
 
