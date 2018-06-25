@@ -1,0 +1,15 @@
+parallell or sequential (round robin)
+between sending and receiving
+
+2 same program wont work
+as when 1 sending other listening
+
+if both send and same time and other not ready
+(both stored in buffer)
+
+Don't both sides need to by synchronized
+(when 1 sending the other recieving?)
+(blast off and stored untill recvfrom used on recievers end?)
+(possiblty of 2 seperate programs paralleel sedn and recv)
+
+Need format for screenshot to send + recv
