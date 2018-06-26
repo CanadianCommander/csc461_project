@@ -36,7 +36,7 @@ namespace Codec{
     void _SetDecoderOptions();
 
     std::shared_ptr<SSourcePicture> _ImageToSourcePicture(std::shared_ptr<IO::Image> img);
-    std::shared_ptr<IO::Image>          _SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h);
+    std::shared_ptr<IO::Image>          _SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h, uint32_t strideY, uint32_t strideUV);
 
     // encoder stuff
     ISVCEncoder * _encoder;

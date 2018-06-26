@@ -60,7 +60,9 @@ namespace Codec{
     }
 
     SFrameBSInfo info;
+    memset(&info, 0, sizeof(SFrameBSInfo));
     auto openh264Img = _ImageToSourcePicture(src);
+    _encoder->ForceIntraFrame(true);
     if(_encoder->EncodeFrame(openh264Img.get(), &info)){
       LogCodec("Error encoding image!", true);
       throw EncoderException("Error encoding image!");
@@ -109,7 +111,7 @@ namespace Codec{
     SDecodingParam sdParam;
     memset(&sdParam, 0, sizeof(SDecodingParam));
 
-    sdParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_AVC;
+    sdParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_SVC;
 
     if(_decoder->Initialize(&sdParam)){
       LogCodec("Decoder Set Options failed!", true);
@@ -133,35 +135,42 @@ namespace Codec{
     pic->iPicWidth = img->GetWidth();
     pic->iPicHeight = img->GetHeight();
     pic->iColorFormat = videoFormatI420;
-    pic->iStride[0] = pic->iPicWidth + 64; // <--- wtf hack to dial in picture??? TODO figure this shit out
-    pic->iStride[1] = pic->iStride[2] = pic->iPicWidth >> 1;
-    pic->pData[0] = &(*rgbData.get())[0];
-    pic->pData[1] = pic->pData[0];
-    pic->pData[2] = pic->pData[0];
-    memset(*(pic->pData + 1), 0, pic->iStride[1]);
-    memset(*(pic->pData + 2), 0, pic->iStride[2]);
+    pic->iStride[0] = pic->iPicWidth;
+    pic->iStride[1] = pic->iStride[2] = pic->iPicWidth/2;
+    pic->pData[0] = &rgbData->at(0);// <-- yes yes I know technically accessing deleted memory region. don't wory, is tmp.
+    pic->pData[1] = &rgbData->at(0);
+    pic->pData[2] = &rgbData->at(0);
 
-    for(int i =0; i < rgbData->size(); i +=3){
-      int num = (0.299*(rgbData.get()->at(i))) + (0.587*(rgbData.get()->at(i+1))) + (0.114*(rgbData.get()->at(i+2))) + 16;
-      num = num >= 0 ? num : 0;
-      num = num <= 255 ? num: 255;
-      pic->pData[0][i/3] = num;
+    for(int z = 0; z < pic->iPicHeight; z +=1){
+      for(int i =0; i < pic->iStride[0]*3; i +=3){
+        int num = (0.299*(rgbData.get()->at(i + pic->iStride[0]*z*3)))
+                  + (0.587*(rgbData.get()->at(i+1 + pic->iStride[0]*z*3)))
+                  + (0.114*(rgbData.get()->at(i+2 + pic->iStride[0]*z*3)));
+        num = num >= 0 ? num : 0;
+        num = num <= 255 ? num: 255;
+        pic->pData[0][i/3 + pic->iPicWidth*z] = num;
+      }
     }
+
 
     return pic;
   }
 
-  std::shared_ptr<IO::Image> Open264Transcoder::_SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h){
+  std::shared_ptr<IO::Image> Open264Transcoder::_SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h, uint32_t strideY, uint32_t strideUV){
     uint8_t rgbBuffer[w*h*3];
+    LogCodec("YUV to RGB with\n- width: %d\n- height: %d\n- stride Y: %d\n- stride UV: %d", false, w, h, strideY, strideUV);
 
-    LogCodec("YUV to RGB with\n- width: %d\n- height: %d", false, w, h);
-    for(int i =0; i < w*h*3; i += 3){
-      int num = 1.164*(yuvData[0][i/3]-16);
-      num = num >= 0 ? num : 0;
-      num = num <= 255 ? num: 255;
-      rgbBuffer[i] = num;
-      rgbBuffer[i+1] = num;
-      rgbBuffer[i+2] = num;
+    uint32_t Yindex = 0;
+    for(int y =0; y < h; y ++){
+      for(int x = 0; x < w; x ++){
+        int num = 1.164*(yuvData[0][Yindex + x]);
+        num = num >= 0 ? num : 0;
+        num = num <= 255 ? num: 255;
+        rgbBuffer[(x + y*w)*3] = num;
+        rgbBuffer[(x + y*w)*3 + 1] = num;
+        rgbBuffer[(x + y*w)*3 + 2] = num;
+      }
+      Yindex += strideY;
     }
 
 
@@ -188,10 +197,15 @@ namespace Codec{
   void Open264Transcoder::FeedPacket(Packet * pk) {
     uint8_t * yuvData[3];
     SBufferInfo sDstBufferInfo;
+    memset(&sDstBufferInfo, 0, sizeof(SBufferInfo));
     //technically a memory over commit
     uint8_t YData[pk->GetRawDataLen()];
     uint8_t UData[pk->GetRawDataLen()];
     uint8_t VData[pk->GetRawDataLen()];
+
+    memset(YData, 0, pk->GetRawDataLen());
+    memset(UData, 0, pk->GetRawDataLen());
+    memset(VData, 0, pk->GetRawDataLen());
 
     yuvData[0] = YData;
     yuvData[1] = UData;
@@ -207,7 +221,7 @@ namespace Codec{
     }
 
     if(sDstBufferInfo.iBufferStatus==1){
-      _decoderQueue.push(_SourcePictureToImage(yuvData, sDstBufferInfo.UsrData.sSystemBuffer.iWidth, sDstBufferInfo.UsrData.sSystemBuffer.iHeight));
+      _decoderQueue.push(_SourcePictureToImage(yuvData, sDstBufferInfo.UsrData.sSystemBuffer.iWidth, sDstBufferInfo.UsrData.sSystemBuffer.iHeight, sDstBufferInfo.UsrData.sSystemBuffer.iStride[0], sDstBufferInfo.UsrData.sSystemBuffer.iStride[1]));
     }
     else{
       LogCodec("Frame Dropped", false);
