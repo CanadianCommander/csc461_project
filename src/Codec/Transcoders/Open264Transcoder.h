@@ -16,7 +16,7 @@ namespace Codec{
     //encoder functions
     //init encoder w/ additonal options
     void InitEncoderEx(bool delayInit, EUsageType euType, float frameRate, uint16_t width,
-                      uint16_t height, uint32_t targetBitrate=10000000);
+                      uint16_t height, uint32_t targetBitrate=5000000);
     //---- encoder overrides ----
     void InitEncoder() override;
     void FeedFrame(std::shared_ptr<IO::Image> src) override;
@@ -32,11 +32,12 @@ namespace Codec{
 
   private:
     void _SetEncoderOptions(EUsageType euType, float frameRate, uint16_t width, uint16_t height,
-                            uint32_t targetBitrate=10000000);
+                            uint32_t targetBitrate=5000000);
     void _SetDecoderOptions();
 
     std::shared_ptr<SSourcePicture> _ImageToSourcePicture(std::shared_ptr<IO::Image> img);
-    std::shared_ptr<IO::Image>          _SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h, uint32_t strideY, uint32_t strideUV);
+    std::shared_ptr<IO::Image>      _SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h, uint32_t strideY, uint32_t strideUV,
+                                                          float colorCRed=1.0f, float colorCGreen=0.90f, float colorCBlue=0.95f);
 
     // encoder stuff
     ISVCEncoder * _encoder;

@@ -6,6 +6,14 @@
 #include <memory>
 #include <cstring>
 
+//clamp as that provided by std in C++17
+static int clamp(int num, int low, int high){
+  num = num >= low ? num : low;
+  num = num <= high ? num: high;
+  return num;
+}
+
+
 namespace Codec{
 
   Open264Transcoder::Open264Transcoder(){
@@ -107,27 +115,12 @@ namespace Codec{
             false, euType, frameRate, width, height, targetBitrate);
   }
 
-  void Open264Transcoder::_SetDecoderOptions(){
-    SDecodingParam sdParam;
-    memset(&sdParam, 0, sizeof(SDecodingParam));
-
-    sdParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_SVC;
-
-    if(_decoder->Initialize(&sdParam)){
-      LogCodec("Decoder Set Options failed!", true);
-      throw EncoderException("Error setting decoder options");
-    }
-    else{
-      LogCodec("Decoder Options set", false);
-    }
-  }
-
-
   std::shared_ptr<SSourcePicture> Open264Transcoder::_ImageToSourcePicture(std::shared_ptr<IO::Image> img){
     LogCodec("Image Conversion on Image of Width: %d Height: %d", false,
               img->GetWidth(), img->GetHeight());
 
-    std::shared_ptr<SSourcePicture> pic = std::make_shared<SSourcePicture>();
+    std::shared_ptr<SSourcePicture> pic = std::shared_ptr<SSourcePicture>(new SSourcePicture(),
+      [] (SSourcePicture * sp) -> void {delete [] sp->pData[0]; delete [] sp->pData[1]; delete [] sp->pData[2];});
     std::shared_ptr<std::vector<uint8_t>> rgbData = img->GetRGBBuffer();
     memset(pic.get(), 0, sizeof(SSourcePicture));
 
@@ -137,18 +130,30 @@ namespace Codec{
     pic->iColorFormat = videoFormatI420;
     pic->iStride[0] = pic->iPicWidth;
     pic->iStride[1] = pic->iStride[2] = pic->iPicWidth/2;
-    pic->pData[0] = &rgbData->at(0);// <-- yes yes I know technically accessing deleted memory region. don't wory, is tmp.
-    pic->pData[1] = &rgbData->at(0);
-    pic->pData[2] = &rgbData->at(0);
+    pic->pData[0] = new uint8_t[pic->iPicWidth*pic->iPicHeight];
+    pic->pData[1] = new uint8_t[(pic->iPicWidth*pic->iPicHeight)/4];
+    pic->pData[2] = new uint8_t[(pic->iPicWidth*pic->iPicHeight)/4];
 
+    //RGB -> I420 YUV image
     for(int z = 0; z < pic->iPicHeight; z +=1){
       for(int i =0; i < pic->iStride[0]*3; i +=3){
-        int num = (0.299*(rgbData.get()->at(i + pic->iStride[0]*z*3)))
+        //calculate YUV
+        int Y = (0.299*(rgbData.get()->at(i + pic->iStride[0]*z*3)))
                   + (0.587*(rgbData.get()->at(i+1 + pic->iStride[0]*z*3)))
-                  + (0.114*(rgbData.get()->at(i+2 + pic->iStride[0]*z*3)));
-        num = num >= 0 ? num : 0;
-        num = num <= 255 ? num: 255;
-        pic->pData[0][i/3 + pic->iPicWidth*z] = num;
+                  + (0.114*(rgbData.get()->at(i+2 + pic->iStride[0]*z*3)))
+                  + 16;
+        int U = (0.439*(rgbData.get()->at(i + pic->iStride[0]*z*3)))
+                  + (-0.368*(rgbData.get()->at(i+1 + pic->iStride[0]*z*3)))
+                  + (-0.071*(rgbData.get()->at(i+2 + pic->iStride[0]*z*3)))
+                  + 128;
+        int V = (-0.148*(rgbData.get()->at(i + pic->iStride[0]*z*3)))
+                  + (-0.291*(rgbData.get()->at(i+1 + pic->iStride[0]*z*3)))
+                  + (0.439*(rgbData.get()->at(i+2 + pic->iStride[0]*z*3)))
+                  + 128;
+
+        pic->pData[0][i/3 + pic->iPicWidth*z] = clamp(Y,0,255);
+        pic->pData[1][(i/3)/2 + (pic->iPicWidth/2)*(z/2)] = clamp(U,0,255);
+        pic->pData[2][(i/3)/2 + (pic->iPicWidth/2)*(z/2)] = clamp(V,0,255);
       }
     }
 
@@ -156,21 +161,32 @@ namespace Codec{
     return pic;
   }
 
-  std::shared_ptr<IO::Image> Open264Transcoder::_SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h, uint32_t strideY, uint32_t strideUV){
+  std::shared_ptr<IO::Image> Open264Transcoder::_SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h, uint32_t strideY, uint32_t strideUV,
+                                                                      float colorCRed, float colorCGreen, float colorCBlue){
     uint8_t rgbBuffer[w*h*3];
     LogCodec("YUV to RGB with\n- width: %d\n- height: %d\n- stride Y: %d\n- stride UV: %d", false, w, h, strideY, strideUV);
 
     uint32_t Yindex = 0;
+    uint32_t UVIndex = 0;
+    // I420 YUV -> RGB Image
     for(int y =0; y < h; y ++){
       for(int x = 0; x < w; x ++){
-        int num = 1.164*(yuvData[0][Yindex + x]);
-        num = num >= 0 ? num : 0;
-        num = num <= 255 ? num: 255;
-        rgbBuffer[(x + y*w)*3] = num;
-        rgbBuffer[(x + y*w)*3 + 1] = num;
-        rgbBuffer[(x + y*w)*3 + 2] = num;
+        int R = 1.164*(yuvData[0][Yindex + x] - 20)
+                + 2.018*(yuvData[1][UVIndex + x/2] - 128);
+        int G = 1.164*(yuvData[0][Yindex + x] - 16)
+                - 0.813*(yuvData[1][UVIndex + x/2] - 128)
+                - 0.391*(yuvData[2][UVIndex + x/2] - 128);
+        int B = 1.164*(yuvData[0][Yindex + x] - 16)
+                + 1.596*(yuvData[2][UVIndex + x/2] -128);
+
+        rgbBuffer[(x + y*w)*3] = clamp(R*colorCRed,0,255);
+        rgbBuffer[(x + y*w)*3 + 1] = clamp(G*colorCGreen,0,255);
+        rgbBuffer[(x + y*w)*3 + 2] = clamp(B*colorCBlue,0,255);
       }
       Yindex += strideY;
+      if(y % 2 == 0){
+        UVIndex += strideY/2;
+      }
     }
 
 
@@ -192,6 +208,21 @@ namespace Codec{
     }
 
     _SetDecoderOptions();
+  }
+
+  void Open264Transcoder::_SetDecoderOptions(){
+    SDecodingParam sdParam;
+    memset(&sdParam, 0, sizeof(SDecodingParam));
+
+    sdParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_SVC;
+
+    if(_decoder->Initialize(&sdParam)){
+      LogCodec("Decoder Set Options failed!", true);
+      throw EncoderException("Error setting decoder options");
+    }
+    else{
+      LogCodec("Decoder Options set", false);
+    }
   }
 
   void Open264Transcoder::FeedPacket(Packet * pk) {
