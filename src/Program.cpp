@@ -165,7 +165,7 @@ void Program::InitializeOpenGL()
 
   std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
 
-	_texture = new Graphics::Texture(*img.get());
+	_texture = new Graphics::Texture(img->GetWidth(), img->GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
 	_texture->UploadData(img->GetRawDataPtr());
 
 	auto textureSamplerUniformLocation = glGetUniformLocation(shaderProgram, "textureSampler");
@@ -284,7 +284,7 @@ void Program::UpdateTextures(){
 
 		try{
 			auto imgDec = _transcoder->NextImage();
-			_texture->UploadData(imgDec->GetRawDataPtr());
+			_texture->UploadData(&imgDec->GetRGBBuffer()->at(0));
 		}
 		catch(Codec::DecoderException de){
 
