@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "Program.h"
 #include "IO/ScreenCapture.h"
+#include "Codec/Transcoders/Open264Transcoder.h"
 
 #ifndef NDEBUG
 
@@ -14,6 +15,9 @@ Program::Program(LogPriority logPriority, LogCategory logCategory)
 	InitializeSDL();
 	InitializeOpenGL();
 	_isExiting = false;
+	_transcoder = std::make_shared<Codec::Open264Transcoder>();
+	_transcoder->InitEncoder();
+	_transcoder->InitDecoder();
 }
 
 Program::~Program()
@@ -161,7 +165,7 @@ void Program::InitializeOpenGL()
 
   std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
 
-	_texture = new Graphics::Texture(*img.get());
+	_texture = new Graphics::Texture(img->GetWidth(), img->GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
 	_texture->UploadData(img->GetRawDataPtr());
 
 	auto textureSamplerUniformLocation = glGetUniformLocation(shaderProgram, "textureSampler");
@@ -273,7 +277,22 @@ void Program::HandleEvents()
 
 void Program::UpdateTextures(){
   std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
-  _texture->UploadData(img->GetRawDataPtr());
+	_transcoder->FeedFrame(img);
+	try{
+		auto pk = _transcoder->NextPacket();
+		_transcoder->FeedPacket(pk.get());
+
+		try{
+			auto imgDec = _transcoder->NextImage();
+			_texture->UploadData(&imgDec->GetRGBBuffer()->at(0));
+		}
+		catch(Codec::DecoderException de){
+
+		}
+	}
+	catch(Codec::EncoderException ee){
+
+	}
 }
 
 void Program::Draw()

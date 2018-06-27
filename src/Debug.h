@@ -19,7 +19,8 @@ enum LogCategory
 	NONE = 0,
 	GRAPHICS = 1 << 0,
 	NETWORK = 1 << 1,
-	ALL = GRAPHICS | NETWORK,
+	CODEC	= 1 << 2,
+	ALL = GRAPHICS | NETWORK | CODEC,
 };
 
 #endif

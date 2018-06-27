@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.10)
 project(csc461)
-add_definitions(-std=gnu++14)
+add_definitions(-std=gnu++14 -Ofast)
 
 if(APPLE)
     find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
@@ -16,6 +16,13 @@ set(CMAKE_CXX_STANDARD 14)
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
+
+# 3rd party libraries
+include_directories("./3rdParty/libde265/")
+add_subdirectory("3rdParty/libde265/")
+include_directories("./3rdParty/openh264/codec/api/svc/")
+# 3rd party lib names
+SET(ENCODER_LIBRARIES de265 openh264.so.4)
 
 # Add files here
 SET(SRC_FILES
@@ -33,6 +40,12 @@ SET(SRC_FILES
         IO/ScreenCapture.cpp
         IO/ImageRGB.cpp
         IO/ImageBGRA.cpp
+
+        #codec
+        Codec/Codec.cpp
+        Codec/Transcoders/DE265Transcoder.cpp
+        Codec/Transcoders/Open264Transcoder.cpp
+        Codec/Packets/OpenH264Packet.cpp
         )
 
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -49,7 +62,7 @@ add_executable(csc461 ${SRC_FILES})
 set_target_properties(csc461 PROPERTIES SUFFIX ".a")
 set( EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
-SET(LIBRARIES ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES})
+SET(LIBRARIES ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${ENCODER_LIBRARIES})
 if(APPLE)
     SET(LIBRARIES ${LIBRARIES} ${CORE_GRAPHICS_LIBRARY} ${CORE_FOUNDATION_LIBRARY})
 elseif(UNIX)
