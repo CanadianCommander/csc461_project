@@ -5,9 +5,10 @@
 
 #include <memory>
 #include <cstring>
+#include <chrono>
 
 //clamp as that provided by std in C++17
-static int clamp(int num, int low, int high){
+static int inline clamp(int num, int low, int high){
   num = num >= low ? num : low;
   num = num <= high ? num: high;
   return num;
@@ -63,7 +64,7 @@ namespace Codec{
     if(_encoderDelayInit){
       LogCodec("Doing delayed encoder init", false);
       _encoderDelayInit = false;
-      _SetEncoderOptions(SCREEN_CONTENT_REAL_TIME, 24.0f,
+      _SetEncoderOptions(SCREEN_CONTENT_REAL_TIME, 60.0f,
                           src->GetWidth(), src->GetHeight());
     }
 
@@ -135,7 +136,13 @@ namespace Codec{
     pic->pData[2] = new uint8_t[(pic->iPicWidth*pic->iPicHeight)/4];
 
     //RGB -> I420 YUV image
+    #pragma omp parallel for schedule(dynamic)
     for(int z = 0; z < pic->iPicHeight; z +=1){
+      //buffers to take advantage of cpu cache
+      uint8_t lineBufferY[pic->iStride[0]];
+      uint8_t lineBufferU[pic->iStride[0]/2];
+      uint8_t lineBufferV[pic->iStride[0]/2];
+
       for(int i =0; i < pic->iStride[0]*3; i +=3){
         //calculate YUV
         int Y = (0.299*(rgbData.get()->at(i + pic->iStride[0]*z*3)))
@@ -151,13 +158,15 @@ namespace Codec{
                   + (0.439*(rgbData.get()->at(i+2 + pic->iStride[0]*z*3)))
                   + 128;
 
-        pic->pData[0][i/3 + pic->iPicWidth*z] = clamp(Y,0,255);
-        pic->pData[1][(i/3)/2 + (pic->iPicWidth/2)*(z/2)] = clamp(U,0,255);
-        pic->pData[2][(i/3)/2 + (pic->iPicWidth/2)*(z/2)] = clamp(V,0,255);
+        lineBufferY[i/3] =  clamp(Y,0,255);
+        lineBufferU[(i/3)/2] = clamp(U,0,255);
+        lineBufferV[(i/3)/2] = clamp(V,0,255);
       }
+      memcpy((*pic->pData + pic->iPicWidth*z), lineBufferY, pic->iStride[0]);
+      memcpy((*(pic->pData + 1) + (pic->iPicWidth/2)*(z/2)), lineBufferU, pic->iStride[0]/2);
+      memcpy((*(pic->pData + 2) + (pic->iPicWidth/2)*(z/2)), lineBufferV, pic->iStride[0]/2);
+
     }
-
-
     return pic;
   }
 
@@ -166,29 +175,28 @@ namespace Codec{
     uint8_t rgbBuffer[w*h*3];
     LogCodec("YUV to RGB with\n- width: %d\n- height: %d\n- stride Y: %d\n- stride UV: %d", false, w, h, strideY, strideUV);
 
-    uint32_t Yindex = 0;
-    uint32_t UVIndex = 0;
     // I420 YUV -> RGB Image
+    #pragma omp parallel for schedule(dynamic)
     for(int y =0; y < h; y ++){
+      //buffer to take advantage of cpu cache
+      uint8_t lineBuffer[w*3];
+
       for(int x = 0; x < w; x ++){
-        int R = 1.164*(yuvData[0][Yindex + x] - 20)
-                + 2.018*(yuvData[1][UVIndex + x/2] - 128);
-        int G = 1.164*(yuvData[0][Yindex + x] - 16)
-                - 0.813*(yuvData[1][UVIndex + x/2] - 128)
-                - 0.391*(yuvData[2][UVIndex + x/2] - 128);
-        int B = 1.164*(yuvData[0][Yindex + x] - 16)
-                + 1.596*(yuvData[2][UVIndex + x/2] -128);
+        int R = 1.164*(yuvData[0][strideY*y + x] - 20)
+                + 2.018*(yuvData[1][(strideY/2)*(y/2) + x/2] - 128);
+        int G = 1.164*(yuvData[0][strideY*y + x] - 16)
+                - 0.813*(yuvData[1][(strideY/2)*(y/2) + x/2] - 128)
+                - 0.391*(yuvData[2][(strideY/2)*(y/2) + x/2] - 128);
+        int B = 1.164*(yuvData[0][strideY*y + x] - 16)
+                + 1.596*(yuvData[2][(strideY/2)*(y/2) + x/2] -128);
 
-        rgbBuffer[(x + y*w)*3] = clamp(R*colorCRed,0,255);
-        rgbBuffer[(x + y*w)*3 + 1] = clamp(G*colorCGreen,0,255);
-        rgbBuffer[(x + y*w)*3 + 2] = clamp(B*colorCBlue,0,255);
+        lineBuffer[x*3] = clamp(R*colorCRed,0,255);
+        lineBuffer[x*3 + 1] = clamp(G*colorCGreen,0,255);
+        lineBuffer[x*3 + 2] = clamp(B*colorCBlue,0,255);
       }
-      Yindex += strideY;
-      if(y % 2 == 0){
-        UVIndex += strideY/2;
-      }
+
+      memcpy((rgbBuffer + y*w*3), lineBuffer, w*3);
     }
-
 
     //rgbBuffer is "&rgbBuffer[0]" instead of just "rgbBuffer" because template madness
     // throws error in the later case, even though this case does work with the vanilla "new ..."

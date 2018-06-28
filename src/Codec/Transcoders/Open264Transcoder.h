@@ -32,7 +32,7 @@ namespace Codec{
 
   private:
     void _SetEncoderOptions(EUsageType euType, float frameRate, uint16_t width, uint16_t height,
-                            uint32_t targetBitrate=5000000);
+                            uint32_t targetBitrate=500000);
     void _SetDecoderOptions();
 
     std::shared_ptr<SSourcePicture> _ImageToSourcePicture(std::shared_ptr<IO::Image> img);

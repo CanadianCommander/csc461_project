@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.10)
 project(csc461)
-add_definitions(-std=gnu++14 -Ofast)
-
+add_definitions(-std=gnu++14 -Ofast -fopenmp)
+set(CMAKE_EXE_LINKER_FLAGS -fopenmp)
 if(APPLE)
     find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
     find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
