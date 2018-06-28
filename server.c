@@ -38,6 +38,41 @@ int main()
 		return 1;
   	}
   	
+  	/*int test = 5;*/
+  	while(1)
+  	{
+      	/*receive file size*/
+      	memset(recvBuff, 0, sizeof(recvBuff));
+            
+        recsize = recvfrom(sock, (void*)recvBuff, sizeof recvBuff, 0, (struct sockaddr*)&sa, &fromlen);
+      	if (recsize < 0) 
+        {
+	        fprintf(stderr, "%s\n", strerror(errno));
+            return 1;
+        }
+        printf("%s\n", recvBuff);
+      	
+      	int fsize = atoi(recvBuff);
+      	
+      	/*memset(recvBuff, 0, sizeof(recvBuff));*/
+      	
+      	while(fsize > 0)
+      	{
+      	    memset(recvBuff, 0, sizeof(recvBuff));
+      	    recsize = recvfrom(sock, (void*)recvBuff, sizeof recvBuff, 0, (struct sockaddr*)&sa, &fromlen);
+      	    
+      	    
+      	    
+      	    fsize = fsize - recsize;
+      	    
+      	    printf("recvBuff = %s, fsize = %d\n", recvBuff, fsize);
+      	}
+      	
+      	/*test--;*/
+    }
+  	
+  	
+  	/*
   	while(1)
   	{
         memset(recvBuff, 0, sizeof(recvBuff));
@@ -50,5 +85,6 @@ int main()
 		}
         printf("%s\n", recvBuff);
   	}
+  	*/
 
 }

@@ -42,7 +42,29 @@ int main(int argc, char **argv)
     sa.sin_addr.s_addr = inet_addr(SERV_IP_ADDR);
     length = sizeof sa;
     
-    strcpy(sendBuff, argv[1]);
     
-    bytesSent = sendto(sockfd, sendBuff, strlen(sendBuff), 0,(struct sockaddr*)&sa, sizeof sa);
+    /*strcpy(sendBuff, argv[1]);*/
+    
+    while(1)
+    {
+        /*Send File Size*/
+        int fSendSize = 1024;
+        strcpy(sendBuff, "1024");
+        
+        bytesSent = sendto(sockfd, sendBuff, strlen(sendBuff), 0,(struct sockaddr*)&sa, sizeof sa);
+        
+        /*Beging sending file*/
+        while(fSendSize > 0)
+        {
+            memset(sendBuff, 0, sizeof(sendBuff));
+                
+            /*Read each part of the file and fill sendBuff then send*/
+            strcpy(sendBuff, "BC Ferres");
+                
+            bytesSent = sendto(sockfd, sendBuff, strlen(sendBuff), 0,(struct sockaddr*)&sa, sizeof sa);
+            fSendSize = fSendSize - bytesSent;
+                
+                
+        }
+    }
 }
