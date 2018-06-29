@@ -23,12 +23,12 @@ enum LogCategory
 	ALL = GRAPHICS | NETWORK | CODEC,
 };
 
-#endif
-
 //https://en.wikipedia.org/wiki/ANSI_escape_code
 #define CSI_ATTRIBUTE(attribute) "\033[" #attribute "m"
 #define CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(attribute, fgColor, bgColor) "\033[" #attribute "m\033[38;5;" #fgColor "m\033[48;5;" #bgColor "m"
 #define CSI_RESET "\033[;m"
+
+#endif
 
 #define LogVerbose(category, format, args...) Log(LogPriority::VERBOSE, category, format, ##args)
 #define LogDebug(category, format, args...) Log(LogPriority::DEBUG, category, format, ##args)
@@ -41,6 +41,7 @@ enum LogCategory
 #define Log(level, channels, format, args...) ((void)0)
 #define SetLogPriority() ((void)0)
 #define SetLogCategories() ((void)0)
+#define LogSDL(TEXT) ((void)0)
 #else
 #define Log(level, category, format, args...) \
     LogReal(level, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args)

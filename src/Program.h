@@ -1,4 +1,5 @@
 #pragma once
+
 #include <memory>
 
 #include "Graphics/Graphics.h"
@@ -16,7 +17,7 @@ public:
 #ifndef NDEBUG
 	explicit Program(LogPriority logPriority = LogPriority::VERBOSE, LogCategory logCategory = LogCategory::ALL);
 #else
-	Program();
+	explicit Program();
 #endif
 	~Program();
 	void Loop();
@@ -38,7 +39,7 @@ private:
 	void InitializeOpenGL();
 	void Frame();
 	void HandleEvents();
-  void UpdateTextures();
+	void UpdateTextures();
 	void Draw();
 
 };

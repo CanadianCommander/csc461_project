@@ -1,5 +1,7 @@
 #include "Debug.h"
 
+#ifndef NDEBUG
+
 string logPriorityStrings[6] = {
 		"VERBOSE",
 		"DEBUG",
@@ -31,12 +33,9 @@ string logCategoryFormats[4] = {
 		CSI_ATTRIBUTE_FGCOLOR_BGCOLOR(0, 0, 40),
 };
 
-#ifndef NDEBUG
-
 LogPriority g_logPriority = LogPriority::VERBOSE;
 LogCategory g_logCategory = LogCategory::ALL;
 const char* g_sdlError = nullptr;
-std::vector<char> g_buffer();
 
 #define PRINT_CATEGORY_BY_INDEX(index) fprintf(stderr, "%s %3.8s %s", logCategoryFormats[(index)].c_str(), logCategoryStrings[(index)].c_str(), CSI_RESET);
 
@@ -53,8 +52,7 @@ void LogReal(LogPriority priority, uint32_t category, const string &filePath, in
 		if (category == LogCategory::ALL)
 		{
 			PRINT_CATEGORY_BY_INDEX(0);
-		}
-		else
+		} else
 		{
 			if ((category & LogCategory::GRAPHICS) != 0) PRINT_CATEGORY_BY_INDEX(1);
 			if ((category & LogCategory::NETWORK) != 0) PRINT_CATEGORY_BY_INDEX(2);
