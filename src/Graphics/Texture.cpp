@@ -1,97 +1,75 @@
-
 #include "Texture.h"
 
-namespace Graphics{
+namespace Graphics {
 
-  Texture::Texture(uint32_t width, uint32_t height, GLint internalFormat, GLenum format, GLenum type) : GraphicsResource(){
-  	if (width <= 0 || height <= 0)
-  	{
-  		LogError(LogCategory::GRAPHICS, "Texture width and height must both be greater than zero.");
-  		exit(EXIT_FAILURE);
-  	}
+Texture::Texture(uint32_t width, uint32_t height) : GraphicsResource()
+{
+	if (width <= 0 || height <= 0)
+	{
+		LogCritical(LogCategory::GRAPHICS, "Texture width and height must both be greater than zero.");
+	}
 
-  	_width = width;
-  	_height = height;
-  	_internalFormat = internalFormat;
-  	_format = format;
-  	_type = type;
+	_width = width;
+	_height = height;
+}
 
-  	glGenTextures(1, &_handle);
-  	glBindTexture(GL_TEXTURE_2D, _handle);
-  	LogGL("gl texture handle generated");
+void Texture::UploadImage(const Image* image)
+{
+	GLint colorComponentsType;
+	GLenum pixelDataFormat;
+	GLenum pixelDataType;
+	GetFormatFromImageType(image->GetType(), &colorComponentsType, &pixelDataFormat, &pixelDataType);
 
-  	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  	LogGL("gl texture parameters set");
+	if (_handle == 0 || colorComponentsType != _colorComponentsType || pixelDataFormat != _pixelDataFormat || pixelDataType != _pixelDataType)
+	{
+		_colorComponentsType = colorComponentsType;
+		_pixelDataFormat = pixelDataFormat;
+		_pixelDataType = pixelDataType;
 
-    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, nullptr);
-  	LogGL("gl GPU texture allocated");
-  }
+		if (_handle != 0)
+		{
+			glDeleteTextures(1, &_handle);
+			LogGL("glDeleteTextures");
+		}
 
-  Texture::Texture(IO::Image & img){
-    //DD dispatch
-    img.ConstructTexture(this);
-  }
-
-  Texture::Texture(IO::ImageRGB &rgbImg) : Texture(rgbImg.GetWidth(), rgbImg.GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE) {
-  }
-
-  Texture::Texture(IO::ImageBGRA &bgraImg) : Texture(bgraImg.GetWidth(), bgraImg.GetHeight(), GL_RGB, GL_BGRA, GL_UNSIGNED_BYTE) {
-  }
-
-  Texture::Texture(const Texture &other): GraphicsResource(other){
-    TextureCopy(other);
-  }
-
-  Texture& Texture::operator=(const Texture &other){
-    if(this != &other){
-      GraphicsResource::operator=(other);
-      TextureCopy(other);
-    }
-    return *this;
-  }
-
-  void Texture::UploadData(void* data, uint8_t unpackAlignment){
-  	GLuint previousBoundTextureHandle;
-
-  	glGetIntegerv(GL_TEXTURE_BINDING_2D, reinterpret_cast<GLint*>(&previousBoundTextureHandle));
-  	LogGL("glGetInteger");
-
-  	if (previousBoundTextureHandle != _handle)
-  	{
-  		glBindTexture(GL_TEXTURE_2D, _handle);
-  		LogGL("glBindTexture");
-  	}
-
-  	glPixelStorei(GL_UNPACK_ALIGNMENT, unpackAlignment);
-  	LogGL("glPixelStore");
-
-  	glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, _width, _height, 0, _format, _type, data);
-  	LogGL("glTexImage2D");
-
-  	if (previousBoundTextureHandle != _handle)
-  	{
-  		glBindTexture(GL_TEXTURE_2D, previousBoundTextureHandle);
-  		LogGL("glBindTexture");
-  	}
-  }
-
-  void Texture::UploadData(std::shared_ptr<std::vector<uint8_t>> data, uint8_t unpackAlignment){
-    UploadData((void *)(data->data()), unpackAlignment);
-  }
-
-  void Texture::BindTexture(){
+		glGenTextures(1, &_handle);
+		LogGL("glGenTextures");
 		glBindTexture(GL_TEXTURE_2D, _handle);
-    LogGL("gl texture bound");
-  }
+		LogGL("glBindTexture");
 
-  void Texture::TextureCopy(const Texture &src){
-    _width          = src._width;
-    _height         = src._height;
-    _internalFormat = src._internalFormat;
-    _format         = src._format;
-    _type           = src._type;
-  }
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		LogsGL("glTexParameter");
+	}
+
+	//TODO: This might need to be considered.
+	int unpackAlignment = 4;
+	glPixelStorei(GL_UNPACK_ALIGNMENT, unpackAlignment);
+	LogGL("glPixelStore");
+
+	glTexImage2D(GL_TEXTURE_2D, 0, colorComponentsType, _width, _height, 0, pixelDataFormat, pixelDataType, image->GetData());
+	LogGL("glTexImage2D");
+}
+
+void Texture::GetFormatFromImageType(ImageType imageType, GLint* colorComponentsType, GLenum* pixelDataFormat, GLenum* pixelDataType)
+{
+	switch (imageType)
+	{
+		case ImageType::RGB:
+			*colorComponentsType = GL_RGB;
+			*pixelDataFormat = GL_RGB;
+			*pixelDataType = GL_UNSIGNED_BYTE;
+			return;
+		case ImageType::BGRA:
+			*colorComponentsType = GL_RGB;
+			*pixelDataFormat = GL_BGRA;
+			*pixelDataType = GL_UNSIGNED_BYTE;
+			return;
+		default:
+			LogCritical(LogCategory::GRAPHICS, "OpenGL support for image type is not yet implemented.")
+	}
+}
+
 }

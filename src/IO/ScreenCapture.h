@@ -1,10 +1,11 @@
 #pragma once
+
 #include "Image.h"
 
 //GTK 2 forward defs
 #ifdef __linux__
-  typedef struct _GdkWindow GdkWindow;
-  typedef struct _GdkPixbuf GdkPixbuf;
+typedef struct _GdkWindow GdkWindow;
+typedef struct _GdkPixbuf GdkPixbuf;
 #endif
 
 

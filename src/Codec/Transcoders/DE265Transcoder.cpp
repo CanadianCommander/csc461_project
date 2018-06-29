@@ -80,15 +80,15 @@ namespace Codec{
   }
 
 
-  de265_image * DE265Transcoder::_ImageToDe265Image(std::shared_ptr<IO::Image> img){
+  de265_image * DE265Transcoder::_ImageToDe265Image(std::shared_ptr<IO::Image> image){
 
-    std::shared_ptr<std::vector<uint8_t>> rgbData = img->GetRGBBuffer();
-    de265_image * newImg = new de265_image;
+    auto data = image->GetData();
+    auto newImg = new de265_image;
 
-    newImg->alloc_image(img->GetWidth(), img->GetHeight(), de265_chroma_444, NULL, false,
+    newImg->alloc_image(image->GetWidth(), image->GetHeight(), de265_chroma_444, NULL, false,
       NULL, /*NULL*/ 0, NULL, false);
 
-    LogCodec("Image Conversion on Image of Width: %d Height: %d", false, img->GetWidth(), img->GetHeight());
+    LogCodec("Image Conversion on Image of Width: %d Height: %d", false, image->GetWidth(), image->GetHeight());
     /**
       de image is layed out in planes. so it wants all red then all green then all blue
       instead of rgb rgb rgb ...

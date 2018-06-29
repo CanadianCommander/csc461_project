@@ -5,7 +5,6 @@ set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(csc461)
-add_definitions(-std=gnu++14 -Ofast)
 
 if(APPLE)
     find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
@@ -25,14 +24,14 @@ list(APPEND LIBRARIES ${OPENGL_LIBRARIES})
 list(APPEND INCLUDE_DIRS ${OPENGL_INCLUDE_DIRS})
 
 # OpenMP
+list(APPEND LIBRARIES omp)
 if(APPLE)
-    # Use HomeBrew libomp
     add_definitions("-Xpreprocessor -fopenmp")
-    list(APPEND LIBRARIES "/usr/local/opt/libomp/lib/libomp.dylib")
-    list(APPEND INCLUDE_DIRS "/usr/local/opt/libomp/include")
+    # Use HomeBrew libomp
+    list(APPEND LINK_DIRS /usr/local/opt/libomp/lib/)
+    list(APPEND INCLUDE_DIRS /usr/local/opt/libomp/include)
 elseif(UNIX)
     add_definitions("-fopenmp")
-    list(APPEND LIBRARIES omp)
 endif()
 
 # libde265
@@ -54,13 +53,13 @@ SET(SRC_FILES
         Program.cpp
 
         #graphics
-        Graphics/Graphics.cpp
+        Graphics/GraphicsDebug.cpp
         Graphics/Texture.cpp
+        Graphics/Shaders/Shader.cpp
+        Graphics/Shaders/ShaderProgram.cpp
 
         #io
         IO/ScreenCapture.cpp
-        IO/ImageRGB.cpp
-        IO/ImageBGRA.cpp
 
         #codec
         Codec/Codec.cpp

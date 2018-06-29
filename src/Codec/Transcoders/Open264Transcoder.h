@@ -35,7 +35,7 @@ namespace Codec{
                             uint32_t targetBitrate=500000);
     void _SetDecoderOptions();
 
-    std::shared_ptr<SSourcePicture> _ImageToSourcePicture(std::shared_ptr<IO::Image> img);
+    std::shared_ptr<SSourcePicture> _ImageToSourcePicture(std::shared_ptr<IO::Image> image);
     std::shared_ptr<IO::Image>      _SourcePictureToImage(uint8_t ** yuvData, uint32_t w, uint32_t h, uint32_t strideY, uint32_t strideUV,
                                                           float colorCRed=1.0f, float colorCGreen=0.90f, float colorCBlue=0.95f);
 

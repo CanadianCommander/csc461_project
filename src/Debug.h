@@ -9,18 +9,19 @@ using std::string;
 
 #ifndef NDEBUG
 
-enum LogPriority
+enum class LogPriority
 {
 	VERBOSE = 0, DEBUG = 1, INFO = 2, WARNING = 3, ERROR = 4, CRITICAL = 5
 };
 
-enum LogCategory
+enum class LogCategory
 {
 	NONE = 0,
-	GRAPHICS = 1 << 0,
-	NETWORK = 1 << 1,
-	CODEC	= 1 << 2,
-	ALL = GRAPHICS | NETWORK | CODEC,
+	IO = 1 << 0,
+	GRAPHICS = 1 << 1,
+	NETWORK = 1 << 2,
+	CODEC = 1 << 3,
+	ALL = IO | GRAPHICS | NETWORK | CODEC,
 };
 
 //https://en.wikipedia.org/wiki/ANSI_escape_code
@@ -39,19 +40,23 @@ enum LogCategory
 
 #ifdef NDEBUG
 #define Log(level, channels, format, args...) ((void)0)
+#define LogExit(priority, category, format, args...) ((void)0)
 #define SetLogPriority() ((void)0)
-#define SetLogCategories() ((void)0)
+#define SetLogCategory() ((void)0)
 #define LogSDL(TEXT) ((void)0)
+#define LogVerboseOrElseCritical(category, predicate, text) ((void)0)
 #else
 #define Log(level, category, format, args...) \
     LogReal(level, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args)
+#define LogExit(priority, category, format, args...) \
+    { LogReal(priority, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args); exit(EXIT_FAILURE); }
 #define SetLogPriority(priority) \
     SetLogPriorityReal(priority)
 #define SetLogCategory(category) \
-    SetLogCategoryReal(category)
+    SetLogCategoryReal  (category)
 
 void
-LogReal(LogPriority priority, uint32_t category, const string &file, int line, const string &function, string format,
+LogReal(LogPriority priority, LogCategory category, const string &file, int line, const string &function, string format,
         ...);
 void SetLogPriorityReal(LogPriority priority);
 void SetLogCategoryReal(LogCategory category);
@@ -62,10 +67,22 @@ extern const char* g_sdlError;
     g_sdlError = SDL_GetError();                                                                    \
     if(g_sdlError[0] != '\0')                                                                       \
     {                                                                                               \
-        LogCritical(LogCategory::ALL, #TEXT ": %s. SDL_Error: %s", toStatus(false), g_sdlError);     \
+        LogCritical(LogCategory::ALL, #TEXT ": %s. SDL_Error: %s", toStatus(false), g_sdlError);    \
     } else                                                                                          \
     {                                                                                               \
-        LogVerbose(LogCategory::ALL, #TEXT ": %s.", toStatus(true));                                 \
+        LogVerbose(LogCategory::ALL, #TEXT ": %s.", toStatus(true));                                \
+    }                                                                                               \
+}
+
+#define LogVerboseOrElseCritical(category, predicate, text)                                         \
+{                                                                                                   \
+    if (predicate)                                                                                  \
+    {                                                                                               \
+        LogVerbose(category, #text ": %s.", toStatus(true));                                        \
+    }                                                                                               \
+    else                                                                                            \
+    {                                                                                               \
+        LogCritical(category, #text ": %s.", toStatus(false));                                      \
     }                                                                                               \
 }
 

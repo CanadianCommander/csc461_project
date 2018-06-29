@@ -1,15 +1,15 @@
 #include "Debug.h"
 #include "Program.h"
-#include "Codec/Transcoders/Open264Transcoder.h"
 
 #ifndef NDEBUG
+
 Program::Program(LogPriority logPriority, LogCategory logCategory)
 {
 	SetLogPriority(logPriority);
 	SetLogCategory(logCategory);
 #else
-Program::Program()
-{
+	Program::Program()
+	{
 #endif
 	InitializeSDL();
 	InitializeOpenGL();
@@ -127,26 +127,15 @@ void Program::InitializeOpenGL()
 	glCompileShader(fragmentShader);
 	LogGL("glCompileShader");
 
-	auto shaderProgram = glCreateProgram();
-	LogGL("glCompileProgram");
-	glAttachShader(shaderProgram, vertexShader);
-	LogGL("glAttachShader");
-	glAttachShader(shaderProgram, fragmentShader);
-	LogGL("glAttachShader");
-	glLinkProgram(shaderProgram);
-	LogGL("glLinkProgram");
-	glUseProgram(shaderProgram);
-	LogGL("glUseProgram");
+	_shaderProgram = new ShaderProgram(vertexShaderSource, fragmentShaderSource);
 
-	auto vertexPositionAttributeLocation = static_cast<GLuint>(glGetAttribLocation(shaderProgram, "vertexPosition"));
-	LogGL("glGetAttribLocation");
+	auto vertexPositionAttributeLocation = _shaderProgram->Attributes()["vertexPosition"];
 	glEnableVertexAttribArray(vertexPositionAttributeLocation);
 	LogGL("glEnableVertexAttribArray");
 	glVertexAttribPointer(vertexPositionAttributeLocation, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), nullptr);
 	LogGL("glVertexAttribPointer");
 
-	auto vertexTextureCoordinateLocation = static_cast<GLuint>(glGetAttribLocation(shaderProgram,
-	                                                                               "vertexTextureCoordinate"));
+	auto vertexTextureCoordinateLocation = _shaderProgram->Attributes()["vertexTextureCoordinate"];
 	LogGL("glGetAttribLocation");
 	glEnableVertexAttribArray(vertexTextureCoordinateLocation);
 	LogGL("glEnableVertexAttribArray");
@@ -157,105 +146,96 @@ void Program::InitializeOpenGL()
 	glActiveTexture(GL_TEXTURE0);
 	LogGL("glActiveTexture");
 
-	std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
+	auto image = _screenCapture.GetScreenFrameBuffer();
 
-	_texture = new Graphics::Texture(img->GetWidth(), img->GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
-	_texture->UploadData(img->GetRawDataPtr());
+	_texture = new Texture(image->GetWidth(), image->GetHeight());
+	_texture->UploadImage(image.get());
 
-	auto textureSamplerUniformLocation = glGetUniformLocation(shaderProgram, "textureSampler");
-	LogGL("glGetUniformLocation");
+	auto textureSamplerUniformLocation = _shaderProgram->Uniforms()["textureSampler"];
 	glUniform1i(textureSamplerUniformLocation, 0);
 	LogGL("glUniform1i");
 }
 
 void Program::Loop()
 {
+
+	auto previousUpdateTimePoint = hclock::now();
+	auto accumulatedUpdateTime = millisecondsf(0.0f);
+	auto accumulatedDrawTime = millisecondsf(0.0f);
+	auto updateTime = millisecondsf(0.0f);
+
 	while (!_isExiting)
 	{
-		Frame();
-	}
-}
+		RetryTick:
+		auto currentUpdateTimePoint = hclock::now();
+		accumulatedUpdateTime = std::chrono::duration_cast<millisecondsf>(currentUpdateTimePoint - previousUpdateTimePoint);
+		previousUpdateTimePoint = currentUpdateTimePoint;
 
-void Program::Frame()
-{
-	UpdateTextures();
-	HandleEvents();
-	Draw();
-}
-
-void PrintEvent(const SDL_Event* event)
-{
-	if (event->type == SDL_WINDOWEVENT)
-	{
-		switch (event->window.event)
+		if (_isFixedUpdate && accumulatedUpdateTime < _targetElapsedTime)
 		{
-			case SDL_WINDOWEVENT_SHOWN:
-				SDL_Log("Window %d shown", event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_HIDDEN:
-				SDL_Log("Window %d hidden", event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_EXPOSED:
-				SDL_Log("Window %d exposed", event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_MOVED:
-				SDL_Log("Window %d moved to %d,%d",
-				        event->window.windowID, event->window.data1,
-				        event->window.data2);
-				break;
-			case SDL_WINDOWEVENT_RESIZED:
-				SDL_Log("Window %d resized to %dx%d",
-				        event->window.windowID, event->window.data1,
-				        event->window.data2);
-				glViewport(0, 0, event->window.data1, event->window.data2);
-				break;
-			case SDL_WINDOWEVENT_SIZE_CHANGED:
-				SDL_Log("Window %d size changed to %dx%d",
-				        event->window.windowID, event->window.data1,
-				        event->window.data2);
-				break;
-			case SDL_WINDOWEVENT_MINIMIZED:
-				SDL_Log("Window %d minimized", event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_MAXIMIZED:
-				SDL_Log("Window %d maximized", event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_RESTORED:
-				SDL_Log("Window %d restored", event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_ENTER:
-				SDL_Log("Mouse entered window %d",
-				        event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_LEAVE:
-				SDL_Log("Mouse left window %d", event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_FOCUS_GAINED:
-				SDL_Log("Window %d gained keyboard focus",
-				        event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_FOCUS_LOST:
-				SDL_Log("Window %d lost keyboard focus",
-				        event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_CLOSE:
-				SDL_Log("Window %d closed", event->window.windowID);
-				break;
-#if SDL_VERSION_ATLEAST(2, 0, 5)
-			case SDL_WINDOWEVENT_TAKE_FOCUS:
-				SDL_Log("Window %d is offered a focus", event->window.windowID);
-				break;
-			case SDL_WINDOWEVENT_HIT_TEST:
-				SDL_Log("Window %d has a special hit test", event->window.windowID);
-				break;
-#endif
-			default:
-				SDL_Log("Window %d got unknown event %d",
-				        event->window.windowID, event->window.event);
-				break;
+			auto sleepDuration = _targetElapsedTime - accumulatedUpdateTime;
+			std::this_thread::sleep_for(sleepDuration);
+			goto RetryTick;
+		}
+
+		if (accumulatedUpdateTime > _maximumElapsedTime) accumulatedUpdateTime = _maximumElapsedTime;
+
+		if (_isFixedUpdate)
+		{
+			uint8_t stepCount = 0;
+			while (accumulatedUpdateTime >= _targetElapsedTime)
+			{
+				accumulatedUpdateTime -= _targetElapsedTime;
+				stepCount++;
+				Update();
+			}
+
+			if (stepCount == 1)
+			{
+				if (_updateFrameLag > 0) _updateFrameLag--;
+			} else {
+				_updateFrameLag += stepCount - 1;
+			}
+
+			if (_isRunningSlowly)
+			{
+				if (_updateFrameLag == 0) _isRunningSlowly = false;
+			}
+			else if (_updateFrameLag >= 5)
+			{
+				_isRunningSlowly = true;
+			}
+
+			updateTime = std::chrono::duration_cast<std::chrono::milliseconds>(_targetElapsedTime) * stepCount;
+		} else {
+			updateTime = accumulatedUpdateTime;
+			accumulatedUpdateTime = millisecondsf(0.0f);
+			Update();
+		}
+
+		_framesCounter++;
+		Draw();
+
+		accumulatedDrawTime += updateTime;
+		if (accumulatedDrawTime > _oneSecondDuration)
+		{
+			accumulatedDrawTime -= _oneSecondDuration;
+			_framesPerSecond = _framesCounter;
+			_framesCounter = 0;
+
+			char x[10];
+			sprintf(x, "FPS: %d", _framesPerSecond);
+			SDL_SetWindowTitle(_window, x);
 		}
 	}
 }
+
+void Program::Update()
+{
+	UpdateTextures();
+	HandleEvents();
+}
+
 
 void Program::HandleEvents()
 {
@@ -266,41 +246,39 @@ void Program::HandleEvents()
 		{
 			_isExiting = true;
 		}
-
-		PrintEvent(&e);
 	}
 }
 
 void Program::UpdateTextures()
 {
-	std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
-	_transcoder->FeedFrame(img);
-	try
-	{
-		auto pk = _transcoder->NextPacket();
-		_transcoder->FeedPacket(pk.get());
-
-		try
-		{
-			auto imgDec = _transcoder->NextImage();
-			_texture->UploadData(&imgDec->GetRGBBuffer()->at(0));
-		}
-		catch (Codec::DecoderException de)
-		{
-
-		}
-	}
-	catch (Codec::EncoderException ee)
-	{
-
-	}
+//	auto image = _screenCapture.GetScreenFrameBuffer();
+//
+//	_transcoder->FeedFrame(image);
+//	try
+//	{
+//		auto packet = _transcoder->NextPacket();
+//		_transcoder->FeedPacket(packet.get());
+//
+//		try
+//		{
+//			auto imageDecoded = _transcoder->NextImage();
+//			_texture->UploadImage(imageDecoded.get());
+//		}
+//		catch (const Codec::DecoderException &de)
+//		{
+//			LogCritical(LogCategory::CODEC, "hmmm");
+//		}
+//	}
+//	catch (const Codec::EncoderException &ee)
+//	{
+//		LogCritical(LogCategory::CODEC, "hmmm");
+//	}
 }
 
 void Program::Draw()
 {
 	glClearColor(0, 0, 0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
-	_texture->BindTexture();
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 

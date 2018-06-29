@@ -22,12 +22,12 @@ namespace Codec {
 
     //decoder functions
     //---- decoder overrides ----
-    virtual void InitDecoder() {};
-    virtual void FeedPacket(Packet * pk) {};
-    virtual std::shared_ptr<IO::Image> NextImage() {return nullptr;};
+    virtual void InitDecoder() override {};
+    virtual void FeedPacket(Packet * pk) override {};
+    virtual std::shared_ptr<IO::Image> NextImage() override {return nullptr;};
 
   private:
-    de265_image * _ImageToDe265Image(std::shared_ptr<IO::Image> img);
+    de265_image * _ImageToDe265Image(std::shared_ptr<IO::Image> image);
 
     en265_encoder_context * _encContext;
 
