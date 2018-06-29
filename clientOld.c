@@ -44,16 +44,12 @@ int main(int argc, char **argv)
     
     
     /*strcpy(sendBuff, argv[1]);*/
-    int fnum = 0;
-    while(fnum < 2)
+    
+    while(1)
     {
         /*Send File Size*/
-        /*4 bytes of overhead so realistically 1020 bytes*/
-        /*int fSendSize = 1024;
+        int fSendSize = 1024;
         strcpy(sendBuff, "1024");
-        */
-        int fSendSize = 50;
-        strcpy(sendBuff, "50");
         
         bytesSent = sendto(sockfd, sendBuff, strlen(sendBuff), 0,(struct sockaddr*)&sa, sizeof sa);
         
@@ -63,25 +59,12 @@ int main(int argc, char **argv)
             memset(sendBuff, 0, sizeof(sendBuff));
                 
             /*Read each part of the file and fill sendBuff then send*/
-            sprintf(sendBuff, "%d", fnum); 
-            /*strcpy(sendBuff+4, "BC Ferres");*/
-            
-            char *sendData = sendBuff;
-            /*sendBuff[3] = '\0';*/
-            sendData += 4;
-            
-
-            
-            strcpy(sendData, "BC Ferres");
-            /*strcpy(sendBuff+4, "BC Ferres");*/
-            
-            printf("sendData(beforeSend) = %s\n", sendData);
+            strcpy(sendBuff, "BC Ferres");
                 
             bytesSent = sendto(sockfd, sendBuff, strlen(sendBuff), 0,(struct sockaddr*)&sa, sizeof sa);
             fSendSize = fSendSize - bytesSent;
                 
                 
         }
-        fnum++;
     }
 }

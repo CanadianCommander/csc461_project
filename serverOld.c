@@ -39,7 +39,6 @@ int main()
   	}
   	
   	/*int test = 5;*/
-  	//int fnum = 0;
   	while(1)
   	{
       	/*receive file size*/
@@ -62,20 +61,13 @@ int main()
       	    memset(recvBuff, 0, sizeof(recvBuff));
       	    recsize = recvfrom(sock, (void*)recvBuff, sizeof recvBuff, 0, (struct sockaddr*)&sa, &fromlen);
       	    
-      	    char frameNum[10];
-      	    strncpy(frameNum, recvBuff, 3);
-      	    frameNum[3] = '\0';
-      	    printf("frameNum = %s\n", frameNum);
+      	    
       	    
       	    fsize = fsize - recsize;
       	    
-      	    char *recData = recvBuff;
-      	    recData += 4;
       	    printf("recvBuff = %s, fsize = %d\n", recvBuff, fsize);
-      	    /*printf("recvBuff = %s, fsize = %d\n", recvBuff+4, fsize);*/
       	}
       	
-      	//fnum++;
       	/*test--;*/
     }
   	
@@ -96,3 +88,4 @@ int main()
   	*/
 
 }
+
