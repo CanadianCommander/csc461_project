@@ -9,7 +9,10 @@ namespace IO {
     ImageRGB(uint8_t * rawRGB, uint32_t width, uint32_t height, uint32_t len);
     ~ImageRGB();
 
+    ImageFormat GetRawImageFormat() override;
+    std::shared_ptr<std::vector<ImageFormat>> GetSupportedImageFormats() override;
     void * GetRawDataPtr() override;
+    std::shared_ptr<std::vector<uint8_t>> GetImageBuffer(ImageFormat f) override;
     std::shared_ptr<std::vector<uint8_t>> GetRGBBuffer() override;
     uint32_t GetWidth() override;
     uint32_t GetHeight() override;
