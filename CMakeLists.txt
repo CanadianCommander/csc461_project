@@ -42,6 +42,7 @@ SET(SRC_FILES
         IO/ImageRGB.cpp
         IO/ImageBGRA.cpp
         IO/ImageYUV444.cpp
+        IO/ImageYUV420.cpp
 
         #codec
         Codec/Codec.cpp

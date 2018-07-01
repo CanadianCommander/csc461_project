@@ -1,8 +1,9 @@
 #include "VPXTranscoder.h"
 #include "../Codec.h"
-#include "../../IO/ImageYUV444.h"
+#include "../../IO/ImageYUV420.h"
 #include <algorithm>
 #include <cstring>
+#include <chrono>
 
 namespace Codec {
   //general methods
@@ -37,7 +38,7 @@ namespace Codec {
     cfg.g_h = height;
     cfg.g_threads = threadCount;
     cfg.rc_target_bitrate = bitrate;
-    cfg.g_error_resilient = true;
+    cfg.g_error_resilient = false;
     if(vpx_codec_enc_init(&_encoder, encoderInterface->codec_interface(), &cfg, 0)){
       throw EncoderException("Error Initalizing encoder ");
     }
@@ -56,11 +57,14 @@ namespace Codec {
   void VPXTranscoder::FeedFrame(std::shared_ptr<IO::Image> src){
     if(_delayEncoderInit){
       _delayEncoderInit = false;
-      InitEncoderEx("vp9", src->GetWidth(), src->GetHeight(), 16);
+      InitEncoderEx(VPX_VERSION, src->GetWidth(), src->GetHeight(), 4);
     }
 
     auto vpxImg = ImageToVPXImage(src);
-    auto res = vpx_codec_encode(&_encoder, vpxImg.get(),_encoder_frame_num++, 1, 0, VPX_DL_REALTIME);
+    auto startTime = std::chrono::high_resolution_clock::now();
+    auto res = vpx_codec_encode(&_encoder, vpxImg.get(),_encoder_frame_num++, 30000,  0, VPX_DL_REALTIME);
+    LogCodec("---PERFORMANCE---\nEncoder Time %dms\n---PERFORMANCE---",
+              false, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count());
     if(res){
       LogCodec("Error when encoding frame! code: %d", true, res);
       throw EncoderException("Error! Codec Error while encoding frame");
@@ -69,7 +73,6 @@ namespace Codec {
     vpx_codec_iter_t it = NULL;
     const vpx_codec_cx_pkt_t * packet = nullptr;
     while((packet = vpx_codec_get_cx_data(&_encoder, &it)) != NULL){
-      LogCodec("you spin me right round", false);
       if(packet->kind == VPX_CODEC_CX_FRAME_PKT){
         LogCodec("New Packet From Encoder", false);
         _packetQueue.push(std::make_shared<VPXPacket>((uint8_t*)packet->data.frame.buf,packet->data.frame.sz));
@@ -110,7 +113,7 @@ namespace Codec {
   }
 
   std::shared_ptr<IO::Image> VPXTranscoder::VPXImageToImage(vpx_image_t * img){
-    return std::make_shared<IO::ImageYUV444>(img->planes, img->w, img->h, img->stride[0]);
+    return std::make_shared<IO::ImageYUV420>(img->planes, img->d_w, img->d_h, img->stride[0], img->stride[1]);
   }
 
   void VPXTranscoder::InitDecoderEx(std::string codecName){
@@ -129,7 +132,7 @@ namespace Codec {
   }
 
   void VPXTranscoder::InitDecoder(){
-    InitDecoderEx("vp9");
+    InitDecoderEx(VPX_VERSION);
   }
 
   void VPXTranscoder::FeedPacket(Packet * pk){
@@ -141,7 +144,7 @@ namespace Codec {
     vpx_image_t * outFrame = nullptr;
 
     while((outFrame = vpx_codec_get_frame(&_decoder, &it)) != NULL){
-      LogCodec("Got new frame from decoder", false);
+      LogCodec("Got new frame from decoder W: %d H: %d", false, outFrame->d_w, outFrame->d_h);
       _frameQueue.push(VPXImageToImage(outFrame));
     }
 

@@ -10,7 +10,7 @@
 #include "tools_common.h"
 
 namespace Codec{
-
+  #define VPX_VERSION "vp8" // vp8
   class VPXTranscoder: public Transcoder {
   public:
     //general methods
