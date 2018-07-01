@@ -4,10 +4,10 @@
 #include "Image.h"
 
 namespace IO {
-  class ImageRGB: public Image {
+  class ImageYUV444: public Image {
   public:
-    ImageRGB(uint8_t * rawRGB, uint32_t width, uint32_t height, uint32_t len);
-    ~ImageRGB();
+    ImageYUV444(uint8_t ** planeData, uint32_t width, uint32_t height, uint32_t stride);
+    ~ImageYUV444();
 
     ImageFormat GetRawImageFormat() override;
     std::shared_ptr<std::vector<ImageFormat>> GetSupportedImageFormats() override;
@@ -20,13 +20,16 @@ namespace IO {
     void ConstructTexture(Graphics::Texture * t) override;
 
   private:
-    std::shared_ptr<std::vector<uint8_t>> GetYUV444Buffer();
-    std::shared_ptr<std::vector<uint8_t>> GetYUV420Buffer();
+    uint8_t * _YUVData;
+    uint32_t _Ysize;
+    uint32_t _Usize;
+    uint32_t _Vsize;
+    uint32_t _Ystride;
+    uint32_t _Ustride;
+    uint32_t _Vstride;
 
-
-    uint8_t* _rawRGB;
-    uint32_t _lenBytes;
     uint32_t _width;
     uint32_t _height;
+
   };
 }

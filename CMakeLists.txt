@@ -21,8 +21,9 @@ include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 include_directories("./3rdParty/libde265/")
 add_subdirectory("3rdParty/libde265/")
 include_directories("./3rdParty/openh264/codec/api/svc/")
+include_directories("./3rdParty/libvpx/")
 # 3rd party lib names
-SET(ENCODER_LIBRARIES de265 openh264.so.4)
+SET(ENCODER_LIBRARIES de265 openh264.so.4 vpx)
 
 # Add files here
 SET(SRC_FILES
@@ -40,12 +41,18 @@ SET(SRC_FILES
         IO/ScreenCapture.cpp
         IO/ImageRGB.cpp
         IO/ImageBGRA.cpp
+        IO/ImageYUV444.cpp
 
         #codec
         Codec/Codec.cpp
         Codec/Transcoders/DE265Transcoder.cpp
         Codec/Transcoders/Open264Transcoder.cpp
+        Codec/Transcoders/VPXTranscoder.cpp
         Codec/Packets/OpenH264Packet.cpp
+        Codec/Packets/VPXPacket.cpp
+
+        #libvpx extra
+        ../3rdParty/libvpx/tools_common.c
         )
 
 SET(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)

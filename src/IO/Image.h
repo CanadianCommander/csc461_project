@@ -11,8 +11,16 @@ namespace IO {
   enum ImageFormat{
     IMAGE_FORMAT_RGB,
     IMAGE_FORMAT_BGR,
-    IMAGE_FORMAT_YUV444
+    IMAGE_FORMAT_YUV444,
+    IMAGE_FORMAT_YUV420
   };
+
+  static int inline clamp(int num, int low, int high){
+    num = num >= low ? num : low;
+    num = num <= high ? num: high;
+    return num;
+  }
+
 
   class Image {
   public:

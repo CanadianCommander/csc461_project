@@ -2,6 +2,7 @@
 #include "Program.h"
 #include "IO/ScreenCapture.h"
 #include "Codec/Transcoders/Open264Transcoder.h"
+#include "Codec/Transcoders/VPXTranscoder.h"
 
 #ifndef NDEBUG
 
@@ -15,7 +16,7 @@ Program::Program(LogPriority logPriority, LogCategory logCategory)
 	InitializeSDL();
 	InitializeOpenGL();
 	_isExiting = false;
-	_transcoder = std::make_shared<Codec::Open264Transcoder>();
+	_transcoder = std::make_shared<Codec::VPXTranscoder>();
 	_transcoder->InitEncoder();
 	_transcoder->InitDecoder();
 }
