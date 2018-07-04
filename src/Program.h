@@ -1,4 +1,5 @@
 #pragma once
+
 #include <memory>
 
 #include "Graphics/Graphics.h"
@@ -38,7 +39,7 @@ private:
 	void InitializeOpenGL();
 	void Frame();
 	void HandleEvents();
-  void UpdateTextures();
+	void UpdateTextures();
 	void Draw();
 
 };

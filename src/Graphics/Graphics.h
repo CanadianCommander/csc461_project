@@ -1,11 +1,14 @@
 #pragma once
 
 #include <SDL.h>
+
 #ifdef __APPLE__
-	#include <OpenGl/gl3.h>
+
+#include <OpenGl/gl3.h>
+
 #elif __linux__
-	#define GL_GLEXT_PROTOTYPES
-	#include <GL/gl.h>
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
 #endif
 
 //#include <glm/glm.hpp>
@@ -22,21 +25,21 @@ extern GLenum g_glError;
 #define glCheckErrors(TEXT)                                                 \
 {                                                                           \
 	g_glError = GL_NO_ERROR;                                                \
-    while ((g_glError = glGetError()) != GL_NO_ERROR)                       \
-    {                                                                       \
-        LogError(LogCategory::GRAPHICS, #TEXT " GLError: %d", g_glError);   \
-    }                                                                       \
+	while ((g_glError = glGetError()) != GL_NO_ERROR)                       \
+	{                                                                       \
+		LogError(LogCategory::GRAPHICS, #TEXT " GLError: %d", g_glError);   \
+	}                                                                       \
 }
 #define LogGL(TEXT)                                                                                 \
 {                                                                                                   \
 	g_glError = GL_NO_ERROR;                                                                        \
-    if((g_glError = glGetError()) != GL_NO_ERROR)                                                   \
-    {                                                                                               \
-        LogError(LogCategory::GRAPHICS, #TEXT ": %s. GLError: %d", toStatus(false), g_glError);     \
-		exit(EXIT_FAILURE);                                                                         \
-    } else                                                                                          \
+	if((g_glError = glGetError()) != GL_NO_ERROR)                                                   \
 	{                                                                                               \
-    	LogVerbose(LogCategory::GRAPHICS, #TEXT ": %s.", toStatus(true));                           \
-    }                                                                                               \
+		LogError(LogCategory::GRAPHICS, #TEXT ": %s. GLError: %d", toStatus(false), g_glError);     \
+		exit(EXIT_FAILURE);                                                                         \
+	} else                                                                                          \
+	{                                                                                               \
+		LogVerbose(LogCategory::GRAPHICS, #TEXT ": %s.", toStatus(true));                           \
+	}                                                                                               \
 }
 #endif

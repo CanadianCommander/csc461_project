@@ -1,35 +1,42 @@
 #pragma once
+
 #include "Transcoder.h"
 #include "../../../3rdParty/libde265/libde265/en265.h"
 
 namespace Codec {
-  class DE265Transcoder: public Transcoder {
-  public:
-    //general methods
-    DE265Transcoder();
-    virtual ~DE265Transcoder();
+class DE265Transcoder : public Transcoder
+{
+public:
 
-    //encoder functions
-    /**
-      initalize encoder
-      @param cThreads the number of system threads to use for encoding
-    **/
-    void InitEncoderEx(uint16_t cThreads);
-    //---- encoder overrides ----
-    void InitEncoder() override;
-    void FeedFrame(std::shared_ptr<IO::Image> src) override;
-    std::shared_ptr<Packet> NextPacket() override;
+	DE265Transcoder();
+	virtual ~DE265Transcoder();
 
-    //decoder functions
-    //---- decoder overrides ----
-    virtual void InitDecoder() {};
-    virtual void FeedPacket(Packet * pk) {};
-    virtual std::shared_ptr<IO::Image> NextImage() {return nullptr;};
+	//encoder functions
+	/**
+	  initalize encoder
+	  @param cThreads the number of system threads to use for encoding
+	**/
+	void InitEncoderEx(uint16_t cThreads);
+	//---- encoder overrides ----
+	void InitEncoder() override;
+	void FeedFrame(std::shared_ptr<IO::Image> src) override;
+	std::shared_ptr<Packet> NextPacket() override;
 
-  private:
-    de265_image * _ImageToDe265Image(std::shared_ptr<IO::Image> img);
+	//decoder functions
+	//---- decoder overrides ----
+	void InitDecoder() final
+	{};
 
-    en265_encoder_context * _encContext;
+	void FeedPacket(Packet* pk) final
+	{};
 
-  };
+	std::shared_ptr<IO::Image> NextImage() final
+	{ return nullptr; };
+
+private:
+	de265_image* _ImageToDe265Image(std::shared_ptr<IO::Image> img);
+
+	en265_encoder_context* _encContext;
+
+};
 }

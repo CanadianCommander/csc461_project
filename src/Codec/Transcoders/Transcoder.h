@@ -1,12 +1,14 @@
 #pragma once
+
 #include "Encoder.h"
 #include "Decoder.h"
 
 
-namespace Codec{
+namespace Codec {
 
-  class Transcoder: public Encoder, public Decoder {
+class Transcoder : public Encoder, public Decoder
+{
 
-  };
+};
 
 }

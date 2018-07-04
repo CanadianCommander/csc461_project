@@ -80,7 +80,6 @@ SET(SRC_FILES
         IO/ImageYUV420.cpp
 
         #codec
-        Codec/Codec.cpp
         Codec/Transcoders/DE265Transcoder.cpp
         Codec/Transcoders/Open264Transcoder.cpp
         Codec/Transcoders/VPXTranscoder.cpp

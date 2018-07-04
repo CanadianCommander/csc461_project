@@ -44,29 +44,29 @@ enum LogCategory
 #define LogSDL(TEXT) ((void)0)
 #else
 #define Log(level, category, format, args...) \
-    LogReal(level, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args)
+	LogReal(level, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args)
 #define SetLogPriority(priority) \
-    SetLogPriorityReal(priority)
+	SetLogPriorityReal(priority)
 #define SetLogCategory(category) \
-    SetLogCategoryReal(category)
+	SetLogCategoryReal(category)
 
 void
 LogReal(LogPriority priority, uint32_t category, const string &file, int line, const string &function, string format,
-        ...);
+		...);
 void SetLogPriorityReal(LogPriority priority);
 void SetLogCategoryReal(LogCategory category);
 
 extern const char* g_sdlError;
 #define LogSDL(TEXT)                                                                                \
 {                                                                                                   \
-    g_sdlError = SDL_GetError();                                                                    \
-    if(g_sdlError[0] != '\0')                                                                       \
-    {                                                                                               \
-        LogCritical(LogCategory::ALL, #TEXT ": %s. SDL_Error: %s", toStatus(false), g_sdlError);     \
-    } else                                                                                          \
-    {                                                                                               \
-        LogVerbose(LogCategory::ALL, #TEXT ": %s.", toStatus(true));                                 \
-    }                                                                                               \
+	g_sdlError = SDL_GetError();                                                                    \
+	if(g_sdlError[0] != '\0')                                                                       \
+	{                                                                                               \
+		LogCritical(LogCategory::ALL, #TEXT ": %s. SDL_Error: %s", toStatus(false), g_sdlError);     \
+	} else                                                                                          \
+	{                                                                                               \
+		LogVerbose(LogCategory::ALL, #TEXT ": %s.", toStatus(true));                                 \
+	}                                                                                               \
 }
 
 #endif

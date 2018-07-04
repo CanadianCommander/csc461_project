@@ -9,7 +9,9 @@
 #include "vpx_ports/msvc.h"
 
 #if CONFIG_ENCODERS
+
 #include "y4minput.h"
+
 #endif
 
 #if defined(_MSC_VER)
@@ -38,7 +40,9 @@ typedef long FileOffset; /* NOLINT */
 #define isatty _isatty
 #define fileno _fileno
 #else
+
 #include <unistd.h> /* NOLINT */
+
 #endif              /* _MSC_VER */
 #endif              /* CONFIG_OS_SUPPORT */
 
@@ -56,27 +60,31 @@ typedef long FileOffset; /* NOLINT */
 #define VP8_FOURCC 0x30385056
 #define VP9_FOURCC 0x30395056
 
-enum VideoFileType {
+enum VideoFileType
+{
 	FILE_TYPE_RAW,
 	FILE_TYPE_IVF,
 	FILE_TYPE_Y4M,
 	FILE_TYPE_WEBM
 };
 
-struct FileTypeDetectionBuffer {
+struct FileTypeDetectionBuffer
+{
 	char buf[4];
 	size_t buf_read;
 	size_t position;
 };
 
-struct VpxRational {
+struct VpxRational
+{
 	int numerator;
 	int denominator;
 };
 
-struct VpxInputContext {
-	const char *filename;
-	FILE *file;
+struct VpxInputContext
+{
+	const char* filename;
+	FILE* file;
 	int64_t length;
 	struct FileTypeDetectionBuffer detect;
 	enum VideoFileType file_type;
@@ -104,42 +112,43 @@ extern "C" {
 #endif
 
 /* Sets a stdio stream into binary mode */
-FILE *set_binary_mode(FILE *stream);
+FILE* set_binary_mode(FILE* stream);
 
-void die(const char *fmt, ...) VPX_NO_RETURN;
-void fatal(const char *fmt, ...) VPX_NO_RETURN;
-void warn(const char *fmt, ...);
+void die(const char* fmt, ...) VPX_NO_RETURN;
+void fatal(const char* fmt, ...) VPX_NO_RETURN;
+void warn(const char* fmt, ...);
 
-void die_codec(vpx_codec_ctx_t *ctx, const char *s) VPX_NO_RETURN;
+void die_codec(vpx_codec_ctx_t* ctx, const char* s) VPX_NO_RETURN;
 
 /* The tool including this file must define usage_exit() */
 void usage_exit(void) VPX_NO_RETURN;
 
 #undef VPX_NO_RETURN
 
-int read_yuv_frame(struct VpxInputContext *input_ctx, vpx_image_t *yuv_frame);
+int read_yuv_frame(struct VpxInputContext* input_ctx, vpx_image_t* yuv_frame);
 
-typedef struct VpxInterface {
-	const char *const name;
+typedef struct VpxInterface
+{
+	const char* const name;
 	const uint32_t fourcc;
-	vpx_codec_iface_t *(*const codec_interface)();
+	vpx_codec_iface_t* (* const codec_interface)();
 } VpxInterface;
 
 int get_vpx_encoder_count(void);
-const VpxInterface *get_vpx_encoder_by_index(int i);
-const VpxInterface *get_vpx_encoder_by_name(const char *name);
+const VpxInterface* get_vpx_encoder_by_index(int i);
+const VpxInterface* get_vpx_encoder_by_name(const char* name);
 
 int get_vpx_decoder_count(void);
-const VpxInterface *get_vpx_decoder_by_index(int i);
-const VpxInterface *get_vpx_decoder_by_name(const char *name);
-const VpxInterface *get_vpx_decoder_by_fourcc(uint32_t fourcc);
+const VpxInterface* get_vpx_decoder_by_index(int i);
+const VpxInterface* get_vpx_decoder_by_name(const char* name);
+const VpxInterface* get_vpx_decoder_by_fourcc(uint32_t fourcc);
 
 // TODO(dkovalev): move this function to vpx_image.{c, h}, so it will be part
 // of vpx_image_t support
-int vpx_img_plane_width(const vpx_image_t *img, int plane);
-int vpx_img_plane_height(const vpx_image_t *img, int plane);
-void vpx_img_write(const vpx_image_t *img, FILE *file);
-int vpx_img_read(vpx_image_t *img, FILE *file);
+int vpx_img_plane_width(const vpx_image_t* img, int plane);
+int vpx_img_plane_height(const vpx_image_t* img, int plane);
+void vpx_img_write(const vpx_image_t* img, FILE* file);
+int vpx_img_read(vpx_image_t* img, FILE* file);
 
 double sse_to_psnr(double samples, double peak, double mse);
 

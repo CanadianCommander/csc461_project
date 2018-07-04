@@ -1,12 +1,12 @@
 #include "Debug.h"
 #include "Program.h"
-#include "IO/ScreenCapture.h"
 #include "Codec/Transcoders/Open264Transcoder.h"
 #include "Codec/Transcoders/VPXTranscoder.h"
 
 #ifndef NDEBUG
 Program::Program(LogPriority logPriority, LogCategory logCategory)
 #else
+
 Program::Program()
 #endif
 {
@@ -165,7 +165,7 @@ void Program::InitializeOpenGL()
 			0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f
 	};
 
-  std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
+	std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
 
 	_texture = new Graphics::Texture(img->GetWidth(), img->GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
 	_texture->UploadData(img->GetRawDataPtr());
@@ -186,15 +186,17 @@ void Program::Loop()
 
 void Program::Frame()
 {
-  UpdateTextures();
+	UpdateTextures();
 	HandleEvents();
 	Draw();
 }
 
-void PrintEvent(const SDL_Event * event)
+void PrintEvent(const SDL_Event* event)
 {
-	if (event->type == SDL_WINDOWEVENT) {
-		switch (event->window.event) {
+	if (event->type == SDL_WINDOWEVENT)
+	{
+		switch (event->window.event)
+		{
 			case SDL_WINDOWEVENT_SHOWN:
 				SDL_Log("Window %d shown", event->window.windowID);
 				break;
@@ -213,7 +215,7 @@ void PrintEvent(const SDL_Event * event)
 				SDL_Log("Window %d resized to %dx%d",
 				        event->window.windowID, event->window.data1,
 				        event->window.data2);
-				glViewport(0,0,event->window.data1, event->window.data2);
+				glViewport(0, 0, event->window.data1, event->window.data2);
 				break;
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
 				SDL_Log("Window %d size changed to %dx%d",
@@ -277,22 +279,27 @@ void Program::HandleEvents()
 	}
 }
 
-void Program::UpdateTextures(){
-  std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
+void Program::UpdateTextures()
+{
+	std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
 	_transcoder->FeedFrame(img);
-	try{
+	try
+	{
 		auto pk = _transcoder->NextPacket();
 		_transcoder->FeedPacket(pk.get());
 
-		try{
+		try
+		{
 			auto imgDec = _transcoder->NextImage();
 			_texture->UploadData(&imgDec->GetRGBBuffer()->at(0));
 		}
-		catch(Codec::DecoderException de){
+		catch (Codec::DecoderException de)
+		{
 
 		}
 	}
-	catch(Codec::EncoderException ee){
+	catch (Codec::EncoderException ee)
+	{
 
 	}
 }
@@ -301,7 +308,7 @@ void Program::Draw()
 {
 	glClearColor(0, 0, 0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
-  _texture->BindTexture();
+	_texture->BindTexture();
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 
