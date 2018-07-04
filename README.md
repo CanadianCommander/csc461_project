@@ -17,17 +17,29 @@ Screen sharing. One computer is actively sending the screen information to be di
 
 ## How to Build
 
-1. Install Dependencies
+1. Install core dependencies
+
     - CMake
     - SDL2
 
-2. Build
+2. Build 3rd party dependencies
+
+    - libvpx
+        1. Configure
+        2. Make
+    - openh264
+        1. Make
+    - libde265
+        1. CMake
+        2. Make
+
+3. Build project
+
 ```
-cd .../csc461_project
 cmake -H. -Bbuild && make -C ./build
 ```
 
-3. Run
+4. Run
 ```
 ./build/csc461.a
 ```

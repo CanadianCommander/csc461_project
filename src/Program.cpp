@@ -16,7 +16,7 @@ Program::Program(LogPriority logPriority, LogCategory logCategory)
 	InitializeSDL();
 	InitializeOpenGL();
 	_isExiting = false;
-	_transcoder = std::make_shared<Codec::VPXTranscoder>();
+	_transcoder = std::make_shared<Codec::Open264Transcoder>();
 	_transcoder->InitEncoder();
 	_transcoder->InitDecoder();
 }

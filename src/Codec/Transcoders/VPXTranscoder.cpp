@@ -22,7 +22,7 @@ namespace Codec {
                                       uint16_t threadCount, uint32_t bitrate){
     const VpxInterface * encoderInterface = get_vpx_encoder_by_name(codecName.c_str());
     if(!encoderInterface){
-      LogCodec("Could Not find codec: %s", true, codecName);
+      LogCodec("Could Not find codec: %s", true, codecName.c_str());
       throw EncoderException("Error could not locate codec");
     }
 

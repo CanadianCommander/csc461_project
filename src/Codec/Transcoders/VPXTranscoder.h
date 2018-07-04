@@ -7,7 +7,7 @@
 #include "../../IO/Image.h"
 #include "vpx/vpx_encoder.h"
 #include "vpx/vpx_decoder.h"
-#include "tools_common.h"
+#include "VPXHelper.h"
 
 namespace Codec{
   #define VPX_VERSION "vp8" // vp8
