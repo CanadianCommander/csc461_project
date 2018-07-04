@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(csc461)
 
 ## System libraries
-##  - We assume these are installed these on your system
+##  - We assume these are installed on your system
 
 if(APPLE)
     find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
@@ -16,7 +16,8 @@ if(APPLE)
 elseif(UNIX)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
-    list(APPEND INCLUDE_DIRS ${GTK3_LIBRARIES})
+    list(APPEND INCLUDE_DIRS ${GTK3_INCLUDE_DIRS})
+    list(APPEND LIBRARIES ${GTK3_LIBRARIES})
 endif()
 
 # SDL2
@@ -38,10 +39,11 @@ if(APPLE)
     list(APPEND INCLUDE_DIRS /usr/local/opt/libomp/include)
 elseif(UNIX)
     add_definitions("-fopenmp")
+    set(CMAKE_EXE_LINKER_FLAGS -fopenmp)
 endif()
 
 ## 3rd Party
-##  - We assume you compiled these projects in their respective folders after cloning
+##  - We assume you compiled these in their respective folders after cloning
 
 # libde265
 list(APPEND INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/libde265)
@@ -85,10 +87,6 @@ SET(SRC_FILES
         Codec/Transcoders/VPXHelper.c
         Codec/Packets/OpenH264Packet.cpp
         Codec/Packets/VPXPacket.cpp
-
-#        #libvpx extra
-#        ../3rdParty/libvpx/tools_common.h
-#        ../3rdParty/libvpx/tools_common.c
         )
 
 ## Black magic so we can use a source directory
