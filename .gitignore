@@ -38,5 +38,10 @@ CMakeFiles/
 Makefile
 cmake_install.cmake
 
-build/
-bin/
+# CLion
+.idea/
+
+# Build output
+
+[Bb]uild/
+[Bb]in/

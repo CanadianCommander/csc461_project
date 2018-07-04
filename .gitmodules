@@ -1,9 +1,12 @@
 [submodule "3rdParty/libde265"]
 	path = 3rdParty/libde265
 	url = https://github.com/strukturag/libde265.git
+	ignore = dirty
 [submodule "3rdParty/openh264"]
 	path = 3rdParty/openh264
 	url = https://github.com/cisco/openh264.git
+	ignore = dirty
 [submodule "3rdParty/libvpx"]
 	path = 3rdParty/libvpx
 	url = https://chromium.googlesource.com/webm/libvpx
+	ignore = dirty
