@@ -69,8 +69,10 @@ SET(SRC_FILES
         Program.cpp
 
         #graphics
-        Graphics/Graphics.cpp
+        Graphics/GraphicsDebug.cpp
         Graphics/Texture.cpp
+        Graphics/Shaders/Shader.cpp
+        Graphics/Shaders/ShaderProgram.cpp
 
         #io
         IO/ScreenCapture.cpp

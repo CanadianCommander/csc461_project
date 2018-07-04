@@ -19,7 +19,7 @@ enum class LogCategory
 	NONE = 0,
 	GRAPHICS = 1 << 0,
 	NETWORK = 1 << 1,
-	CODEC	= 1 << 2,
+	CODEC = 1 << 2,
 	ALL = GRAPHICS | NETWORK | CODEC,
 };
 
@@ -42,32 +42,43 @@ enum class LogCategory
 #define SetLogPriority() ((void)0)
 #define SetLogCategory() ((void)0)
 #define LogSDL(TEXT) ((void)0)
+define LogVerboseOrElseCritical(category, predicate, text) ((void)0)
 #else
 #define Log(level, category, format, args...) \
-	LogReal(level, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args)
+    LogReal(level, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args)
 #define SetLogPriority(priority) \
-	SetLogPriorityReal(priority)
+    SetLogPriorityReal(priority)
 #define SetLogCategory(category) \
-	SetLogCategoryReal(category)
+    SetLogCategoryReal(category)
 
-void
-LogReal(LogPriority priority, uint32_t category, const string &file, int line, const string &function, string format,
-		...);
+void LogReal(LogPriority priority, LogCategory category, const string &file, int line, const string &function,
+             string format, ...);
 void SetLogPriorityReal(LogPriority priority);
 void SetLogCategoryReal(LogCategory category);
 
 extern const char* g_sdlError;
 #define LogSDL(TEXT)                                                                                \
 {                                                                                                   \
-	g_sdlError = SDL_GetError();                                                                    \
-	if(g_sdlError[0] != '\0')                                                                       \
-	{                                                                                               \
-		LogCritical(LogCategory::ALL, #TEXT ": %s. SDL_Error: %s", toStatus(false), g_sdlError);     \
-	} else                                                                                          \
-	{                                                                                               \
-		LogVerbose(LogCategory::ALL, #TEXT ": %s.", toStatus(true));                                 \
-	}                                                                                               \
+    g_sdlError = SDL_GetError();                                                                    \
+    if(g_sdlError[0] != '\0')                                                                       \
+    {                                                                                               \
+        LogError(LogCategory::ALL, #TEXT ": %s. SDL_Error: %s", toStatus(false), g_sdlError);       \
+    } else                                                                                          \
+    {                                                                                               \
+        LogVerbose(LogCategory::ALL, #TEXT ": %s.", toStatus(true));                                \
+    }                                                                                               \
 }
+
+#define LogVerboseOrCritical(category, predicate, text)                                             \
+{                                                                                                   \
+    if (predicate)                                                                                  \
+    {                                                                                               \
+         LogVerbose(category, #text ": %s.", toStatus(true));                                       \
+    } else                                                                                          \
+     {                                                                                              \
+         LogCritical(category, #text ": %s.", toStatus(false));                                     \
+      }                                                                                             \
+  }
 
 #endif
 
