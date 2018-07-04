@@ -3,6 +3,8 @@
 #include <chrono>
 #include <thread>
 #include <memory>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 using hclock = std::chrono::high_resolution_clock;
 using timepoint = std::chrono::high_resolution_clock::time_point;
@@ -52,9 +54,11 @@ private:
 	uint32_t _windowHeight;
 	ScreenCapture _screenCapture;
 	std::shared_ptr<Codec::Transcoder> _transcoder;
+	uint32_t _socketHandle;
 
 	void InitializeSDL();
 	void InitializeOpenGL();
+	void InitializeNetwork();
 	void Frame();
 	void Update();
 	void Draw();

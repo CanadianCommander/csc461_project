@@ -16,6 +16,7 @@ Program::Program()
 #endif
 	InitializeSDL();
 	InitializeOpenGL();
+	InitializeNetwork();
 	_isExiting = false;
 	_transcoder = std::make_shared<Codec::VPXTranscoder>();
 	_transcoder->InitEncoder();
@@ -171,6 +172,11 @@ void Program::InitializeOpenGL()
 	LogGL("glUniform1i");
 }
 
+void Program::InitializeNetwork()
+{
+	_socketHandle = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+}
+
 void Program::Loop()
 {
 	_previousFrameTimePoint = hclock::now();
@@ -207,7 +213,6 @@ void Program::Frame()
 			_accumulatedFrameTime -= _targetElapsedTime;
 			stepCount++;
 			Update();
-			Draw();
 		}
 
 		if (stepCount == 1)
