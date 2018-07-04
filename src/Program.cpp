@@ -5,13 +5,14 @@
 #include "Codec/Transcoders/VPXTranscoder.h"
 
 #ifndef NDEBUG
-
 Program::Program(LogPriority logPriority, LogCategory logCategory)
+#else
+Program::Program()
+#endif
 {
+#ifndef NDEBUG
 	SetLogPriority(logPriority);
 	SetLogCategory(logCategory);
-#else
-	Program::Program()
 #endif
 	InitializeSDL();
 	InitializeOpenGL();
