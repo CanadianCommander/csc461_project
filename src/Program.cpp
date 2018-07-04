@@ -175,19 +175,70 @@ void Program::Loop()
 {
 	while (!_isExiting)
 	{
+		RetryTick:
+		auto currentFrameTimePoint = hclock::now();
+		_accumulatedFrameTime += std::chrono::duration_cast<millisecondsf>(currentFrameTimePoint - _previousFrameTimePoint);
+		_previousFrameTimePoint = currentFrameTimePoint;
+
+		if (_isFixedUpdate && _accumulatedFrameTime < _targetElapsedTime)
+		{
+			auto sleepDuration = _targetElapsedTime - _accumulatedFrameTime;
+			std::this_thread::sleep_for(sleepDuration);
+			LogVerbose(LogCategory::ALL, "Fixed update; sleeping for %fms", sleepDuration.count());
+			goto RetryTick;
+		}
+
+		if (_accumulatedFrameTime > _maximumElapsedTime) _accumulatedFrameTime = _maximumElapsedTime;
+
 		Frame();
 	}
 }
 
 void Program::Frame()
 {
-	UpdateTextures();
-	HandleEvents();
+	if (_isFixedUpdate)
+	{
+		_frameTime = _targetElapsedTime;
+
+		uint8_t stepCount = 0;
+		while (!_isExiting && _accumulatedFrameTime >= _targetElapsedTime)
+		{
+			_accumulatedFrameTime -= _targetElapsedTime;
+			stepCount++;
+			Update();
+		}
+
+		if (stepCount == 1)
+		{
+			if (_frameLag > 0) _frameLag--;
+		} else {
+			_frameLag += stepCount - 1;
+		}
+
+		if (_isRunningSlowly)
+		{
+			if (_frameLag == 0) _isRunningSlowly = false;
+		}
+		else if (_frameLag >= 0)
+		{
+			_isRunningSlowly = true;
+		}
+	} else {
+		_frameTime = _accumulatedFrameTime;
+		_accumulatedFrameTime = millisecondsf(0.0f);
+		Update();
+	}
+
+	_framesCounter++;
 	Draw();
 }
 
 void Program::HandleEvents()
 {
+	char x[50];
+	sprintf(x, "FPS: %d, Frame Lag: %d", _framesPerSecond, _frameLag);
+	SDL_SetWindowTitle(_window, x);
+
 	SDL_Event e;
 	while (SDL_PollEvent(&e) != 0)
 	{
@@ -196,6 +247,30 @@ void Program::HandleEvents()
 			_isExiting = true;
 		}
 	}
+}
+
+void Program::Update()
+{
+	_framesPerSecondTimer += _frameTime;
+	if (_framesPerSecondTimer > _oneSecondDuration)
+	{
+		_framesPerSecondTimer -= _oneSecondDuration;
+		_framesPerSecond = _framesCounter;
+		_framesCounter = 0;
+
+		char x[10];
+		sprintf(x, "FPS: %d", _framesPerSecond);
+		SDL_SetWindowTitle(_window, x);
+	}
+
+	HandleEvents();
+
+	if (_isRunningSlowly)
+	{
+		return;
+	}
+
+	UpdateTextures();
 }
 
 void Program::UpdateTextures()
