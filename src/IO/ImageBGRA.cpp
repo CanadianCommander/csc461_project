@@ -26,9 +26,9 @@ namespace IO {
   }
 
   std::shared_ptr<std::vector<ImageFormat>> ImageBGRA::GetSupportedImageFormats() {
-    ImageFormat sFormats[] = {IMAGE_FORMAT_BGR, IMAGE_FORMAT_RGB};
+    ImageFormat sFormats[] = {IMAGE_FORMAT_BGR, IMAGE_FORMAT_RGB, IMAGE_FORMAT_YUV420};
     auto outV = std::make_shared<std::vector<ImageFormat>>();
-    outV->assign(sFormats,sFormats + 2);
+    outV->assign(sFormats,sFormats + 3);
     return outV;
   }
 
@@ -40,6 +40,9 @@ namespace IO {
     switch(f){
       case IMAGE_FORMAT_RGB:
         return GetRGBBuffer();
+
+      case IMAGE_FORMAT_YUV420:
+        return GetYUV420Buffer();
 
       case IMAGE_FORMAT_BGR:
         auto retBRGBuff = std::make_shared<std::vector<uint8_t>>();
@@ -77,5 +80,43 @@ namespace IO {
 
   void ImageBGRA::ConstructTexture(Graphics::Texture * t){
     *t = Graphics::Texture(*this);
+  }
+
+  std::shared_ptr<std::vector<uint8_t>> ImageBGRA::GetYUV420Buffer(){
+    std::shared_ptr<std::vector<uint8_t>> buff = std::make_shared<std::vector<uint8_t>>(_width*_height + (_width*_height)/2,0);
+
+    //BGRA -> I420 YUV image
+    #pragma omp parallel for schedule(dynamic)
+    for(int z = 0; z < _height; z +=1){
+      //buffers to take advantage of cpu cache
+      uint8_t lineBufferY[_width];
+      uint8_t lineBufferU[_width/2];
+      uint8_t lineBufferV[_width/2];
+
+      for(int i =0; i < _width*4; i +=4){
+        //calculate YUV
+        int Y = (0.299*(_rawBGRA[i + 2 + _width*z*4]))
+                  + (0.587*(_rawBGRA[i+1 + _width*z*4]))
+                  + (0.114*(_rawBGRA[i + _width*z*4]))
+                  + 16;
+        int U = (0.439*(_rawBGRA[i + 2 + _width*z*4]))
+                  + (-0.368*(_rawBGRA[i+1 + _width*z*4]))
+                  + (-0.071*(_rawBGRA[i + _width*z*4]))
+                  + 128;
+        int V = (-0.148*(_rawBGRA[i + 2 + _width*z*4]))
+                  + (-0.291*(_rawBGRA[i+1 + _width*z*4]))
+                  + (0.439*(_rawBGRA[i + _width*z*4]))
+                  + 128;
+
+        lineBufferY[i/4] = clamp(Y,0,255);
+        lineBufferU[(i/4)/2] = clamp(U,0,255);
+        lineBufferV[(i/4)/2] = clamp(V,0,255);
+      }
+      memcpy((&(buff->at(0)) + _width*z), lineBufferY, _width);
+      memcpy((&(buff->at(_width*_height)) + (_width/2)*(z/2)), lineBufferU, _width/2);
+      memcpy((&(buff->at((5*_width*_height)/4)) + (_width/2)*(z/2)), lineBufferV, _width/2);
+
+    }
+    return buff;
   }
 }

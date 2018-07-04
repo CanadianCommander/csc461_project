@@ -24,6 +24,8 @@ namespace IO {
 
 
   private:
+    std::shared_ptr<std::vector<uint8_t>> GetYUV420Buffer();
+
     uint8_t* _rawBGRA;
     uint32_t _lenBytes;
     uint32_t _width;
