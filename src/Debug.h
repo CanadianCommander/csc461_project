@@ -42,7 +42,7 @@ enum class LogCategory
 #define SetLogPriority() ((void)0)
 #define SetLogCategory() ((void)0)
 #define LogSDL(TEXT) ((void)0)
-define LogVerboseOrElseCritical(category, predicate, text) ((void)0)
+#define LogVerboseOrElseCritical(category, predicate, text) ((void)0)
 #else
 #define Log(level, category, format, args...) \
     LogReal(level, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args)

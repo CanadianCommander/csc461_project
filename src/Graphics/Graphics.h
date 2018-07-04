@@ -13,8 +13,4 @@
 
 #endif
 
-#ifndef NDEBUG
-
 #include "GraphicsDebug.h"
-
-#endif
