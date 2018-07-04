@@ -9,12 +9,12 @@ using std::string;
 
 #ifndef NDEBUG
 
-enum LogPriority
+enum class LogPriority
 {
 	VERBOSE = 0, DEBUG = 1, INFO = 2, WARNING = 3, ERROR = 4, CRITICAL = 5
 };
 
-enum LogCategory
+enum class LogCategory
 {
 	NONE = 0,
 	GRAPHICS = 1 << 0,
