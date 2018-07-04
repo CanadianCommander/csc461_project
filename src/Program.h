@@ -35,7 +35,7 @@ private:
 	timepoint _previousFrameTimePoint;
 	millisecondsf _frameTime = millisecondsf(0);
 	millisecondsf _framesPerSecondTimer = millisecondsf(0);
-	millisecondsf _maximumElapsedTime = millisecondsf(2000.0f);
+	millisecondsf _maximumElapsedTime = millisecondsf(250.0f);
 	millisecondsf _targetElapsedTime = millisecondsf(1000.0f / 20.0f);
 	millisecondsf _accumulatedFrameTime = _targetElapsedTime;
 	std::chrono::milliseconds _oneSecondDuration = std::chrono::milliseconds(1000);

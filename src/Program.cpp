@@ -173,6 +173,8 @@ void Program::InitializeOpenGL()
 
 void Program::Loop()
 {
+	_previousFrameTimePoint = hclock::now();
+
 	while (!_isExiting)
 	{
 		RetryTick:
@@ -184,7 +186,6 @@ void Program::Loop()
 		{
 			auto sleepDuration = _targetElapsedTime - _accumulatedFrameTime;
 			std::this_thread::sleep_for(sleepDuration);
-			LogVerbose(LogCategory::ALL, "Fixed update; sleeping for %fms", sleepDuration.count());
 			goto RetryTick;
 		}
 
@@ -206,6 +207,7 @@ void Program::Frame()
 			_accumulatedFrameTime -= _targetElapsedTime;
 			stepCount++;
 			Update();
+			Draw();
 		}
 
 		if (stepCount == 1)
@@ -229,8 +231,8 @@ void Program::Frame()
 		Update();
 	}
 
-	_framesCounter++;
 	Draw();
+	_framesCounter++;
 }
 
 void Program::HandleEvents()
