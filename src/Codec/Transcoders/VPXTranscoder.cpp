@@ -160,6 +160,7 @@ namespace Codec {
   {
   	if (vpx_codec_decode(&_decoder, pk->GetRawData(), pk->GetRawDataLen(), NULL, 0))
   	{
+      LogCodec("Error Decoding Packet", false);
   		throw DecoderException("Error decoding packet.");
   	}
 

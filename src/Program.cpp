@@ -2,6 +2,7 @@
 #include "Program.h"
 #include "Codec/Transcoders/Open264Transcoder.h"
 #include "Codec/Transcoders/VPXTranscoder.h"
+#include "Codec/Packets/VPXPacket.h"
 
 #ifndef NDEBUG
 
@@ -198,9 +199,9 @@ void Program::InitializeNetwork()
 
 	socklen_t wtf = sizeof(int);
 	status = getsockopt(_socketHandle, SOL_SOCKET, SO_SNDBUF, &_socketSendBufferSize, &wtf);
-	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "getsockopt")
+	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "getsockopt");
 	status = getsockopt(_socketHandle, SOL_SOCKET, SO_RCVBUF, &_socketReceiveBufferSize, &wtf);
-	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "getsockopt")
+	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "getsockopt");
 
 	status = bind(_socketHandle, (struct sockaddr*)&_socketAddress, sizeof(_socketAddress));
 	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "bind");
@@ -397,6 +398,13 @@ void Program::SocketReceive(Program* program)
 			{
 				expectedDataPackets = 0;
 				auto transcoder = program->_transcoder;
+        Codec::VPXPacket nxtFramePkt(frameBuffer, (uint64_t)frameBufferDataPointer - (uint64_t)frameBuffer);
+        try{
+          program->_transcoder->FeedPacket(&nxtFramePkt);
+        }
+        catch(Codec::DecoderException de){
+          //for whatever reason decoding failed
+        }
 				//TODO: Send packet to transcoder.
 //				auto transcoderPacket = Codec::Packet()
 //				transcoder->FeedPacket(transcoderPacket);
