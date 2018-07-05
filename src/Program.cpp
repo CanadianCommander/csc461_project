@@ -4,18 +4,23 @@
 #include "Codec/Transcoders/VPXTranscoder.h"
 
 #ifndef NDEBUG
-Program::Program(LogPriority logPriority, LogCategory logCategory)
+
+Program::Program(bool isSender, LogPriority logPriority, LogCategory logCategory)
 #else
 
-Program::Program()
+Program::Program(bool isSender)
 #endif
 {
 #ifndef NDEBUG
 	SetLogPriority(logPriority);
 	SetLogCategory(logCategory);
 #endif
-	InitializeSDL();
-	InitializeOpenGL();
+	_isSender = isSender;
+	if (!_isSender)
+	{
+		InitializeSDL();
+		InitializeOpenGL();
+	}
 	InitializeNetwork();
 	_isExiting = false;
 	_transcoder = std::make_shared<Codec::VPXTranscoder>();
@@ -174,7 +179,42 @@ void Program::InitializeOpenGL()
 
 void Program::InitializeNetwork()
 {
-	_socketHandle = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	auto status = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	LogVerboseOrCritical(LogCategory::NETWORK, status >= 0, "socket");
+	_socketHandle = (uint32_t)status;
+
+	memset(&_socketAddress, 0, sizeof(_socketAddress));
+	_socketAddress.sin_family = AF_INET;
+	if (_isSender)
+	{
+		_socketAddress.sin_port = htons(8081);
+		_socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+	} else
+	{
+		_socketAddress.sin_port = htons(8080);
+		_socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+	}
+
+
+	socklen_t wtf = sizeof(int);
+	status = getsockopt(_socketHandle, SOL_SOCKET, SO_SNDBUF, &_socketSendBufferSize, &wtf);
+	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "getsockopt")
+	status = getsockopt(_socketHandle, SOL_SOCKET, SO_RCVBUF, &_socketReceiveBufferSize, &wtf);
+	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "getsockopt")
+
+	status = bind(_socketHandle, (struct sockaddr*)&_socketAddress, sizeof(_socketAddress));
+	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "bind");
+
+	memset(&_socketSendAddress, 0, sizeof(_socketSendAddress));
+	_socketSendAddress.sin_family = AF_INET;
+	_socketSendAddress.sin_port = htons(8080);
+	status = inet_aton("127.0.0.1", &_socketAddress.sin_addr);
+	LogVerboseOrCritical(LogCategory::NETWORK, status != 0, "inet_aton");
+
+	if (!_isSender)
+	{
+		_socketReceiveThread = std::thread(SocketReceive, this);
+	}
 }
 
 void Program::Loop()
@@ -185,7 +225,8 @@ void Program::Loop()
 	{
 		RetryTick:
 		auto currentFrameTimePoint = hclock::now();
-		_accumulatedFrameTime += std::chrono::duration_cast<millisecondsf>(currentFrameTimePoint - _previousFrameTimePoint);
+		_accumulatedFrameTime += std::chrono::duration_cast<millisecondsf>(
+				currentFrameTimePoint - _previousFrameTimePoint);
 		_previousFrameTimePoint = currentFrameTimePoint;
 
 		if (_isFixedUpdate && _accumulatedFrameTime < _targetElapsedTime)
@@ -218,25 +259,29 @@ void Program::Frame()
 		if (stepCount == 1)
 		{
 			if (_frameLag > 0) _frameLag--;
-		} else {
+		} else
+		{
 			_frameLag += stepCount - 1;
 		}
 
 		if (_isRunningSlowly)
 		{
 			if (_frameLag == 0) _isRunningSlowly = false;
-		}
-		else if (_frameLag >= 0)
+		} else if (_frameLag >= 0)
 		{
 			_isRunningSlowly = true;
 		}
-	} else {
+	} else
+	{
 		_frameTime = _accumulatedFrameTime;
 		_accumulatedFrameTime = millisecondsf(0.0f);
 		Update();
 	}
 
-	Draw();
+	if (!_isSender)
+	{
+		Draw();
+	}
 	_framesCounter++;
 }
 
@@ -258,48 +303,144 @@ void Program::HandleEvents()
 
 void Program::Update()
 {
-	_framesPerSecondTimer += _frameTime;
-	if (_framesPerSecondTimer > _oneSecondDuration)
+	if (!_isSender)
 	{
-		_framesPerSecondTimer -= _oneSecondDuration;
-		_framesPerSecond = _framesCounter;
-		_framesCounter = 0;
+		_framesPerSecondTimer += _frameTime;
+		if (_framesPerSecondTimer > _oneSecondDuration)
+		{
+			_framesPerSecondTimer -= _oneSecondDuration;
+			_framesPerSecond = _framesCounter;
+			_framesCounter = 0;
 
-		char x[10];
-		sprintf(x, "FPS: %d", _framesPerSecond);
-		SDL_SetWindowTitle(_window, x);
+			char x[10];
+			sprintf(x, "FPS: %d", _framesPerSecond);
+			SDL_SetWindowTitle(_window, x);
+		}
+
+		HandleEvents();
 	}
-
-	HandleEvents();
 
 	if (_isRunningSlowly)
 	{
 		return;
 	}
 
-	UpdateTextures();
+	if (_isSender)
+	{
+		auto image = _screenCapture.GetScreenFrameBuffer();
+		_transcoder->FeedFrame(image);
+		try
+		{
+			auto packet = _transcoder->NextPacket();
+			SendFrameBuffer(packet->GetRawData(), packet->GetRawDataLen());
+		}
+		catch (Codec::EncoderException ee)
+		{
+
+		}
+
+	} else
+	{
+		UpdateTextures();
+	}
+}
+
+void Program::SocketReceive(Program* program)
+{
+	auto socketHandle = program->_socketHandle;
+	auto receiveBufferSize = program->_socketReceiveBufferSize;
+	uint8_t receiveBuffer[receiveBufferSize];
+	ssize_t status = 0;
+	auto expectedDataPackets = 0;
+	auto retrievedDataPackets = 0;
+	size_t frameBufferSize = 0;
+	uint8_t* frameBuffer = nullptr;
+	uint8_t* frameBufferDataPointer = frameBuffer;
+
+	while (!program->_isExiting)
+	{
+		memset(receiveBuffer, 0, receiveBufferSize);
+		status = recvfrom(socketHandle, receiveBuffer, receiveBufferSize, 0, nullptr, nullptr);
+		LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "recvfrom");
+
+		auto bytesRead = status;
+		if (bytesRead == 8)
+		{
+			memcpy(&expectedDataPackets, receiveBuffer, sizeof(uint32_t));
+			retrievedDataPackets = 0;
+			size_t newFrameBufferSize = 0;
+			memcpy(&newFrameBufferSize, receiveBuffer + 4, sizeof(uint32_t));
+			if (newFrameBufferSize > frameBufferSize)
+			{
+				frameBufferSize = newFrameBufferSize;
+				frameBuffer = (uint8_t*)realloc(frameBuffer, frameBufferSize);
+				LogVerboseOrCritical(LogCategory::NETWORK, frameBuffer != nullptr, "realloc");
+			}
+			frameBufferDataPointer = frameBuffer;
+			LogVerbose(LogCategory::NETWORK, "Received header packet for encoded frame buffer: size %d bytes, expecting %d data packet(s).", frameBufferSize, expectedDataPackets);
+		} else
+		{
+			if (expectedDataPackets == 0 || expectedDataPackets == retrievedDataPackets)
+			{
+				LogVerbose(LogCategory::NETWORK, "Unexpected packet for encoded frame buffer.");
+				continue;
+			}
+
+			memcpy(frameBufferDataPointer, receiveBuffer, (size_t)bytesRead);
+			frameBufferDataPointer += bytesRead;
+			retrievedDataPackets++;
+
+			LogVerbose(LogCategory::NETWORK, "Received %d out of %d data packets for encoded frame buffer.",
+			           retrievedDataPackets, expectedDataPackets);
+
+			if (retrievedDataPackets == expectedDataPackets)
+			{
+				expectedDataPackets = 0;
+				auto transcoder = program->_transcoder;
+				//TODO: Send packet to transcoder.
+//				auto transcoderPacket = Codec::Packet()
+//				transcoder->FeedPacket(transcoderPacket);
+			}
+		}
+
+
+	}
+}
+
+void Program::SendFrameBuffer(const uint8_t* data, uint32_t dataLength)
+{
+	uint8_t header[8];
+	memset(header, 0, sizeof(uint8_t) * 5);
+	auto packetsCount = (uint32_t)ceil((float)dataLength / _socketSendBufferSize);
+	memcpy(header, &packetsCount, sizeof(uint32_t));
+	memcpy(header + 4, &dataLength, sizeof(uint32_t));
+	auto status = sendto(_socketHandle, header, sizeof(uint8_t) * 8, 0, (struct sockaddr*)&_socketSendAddress,
+	                     sizeof(_socketSendAddress));
+	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "send");
+
+	auto bytesRemaining = dataLength;
+	auto dataPointer = data;
+	for (int i = 0; i < packetsCount; i++)
+	{
+		auto length = std::min(_socketSendBufferSize, bytesRemaining);
+		status = sendto(_socketHandle, dataPointer, length, 0, (struct sockaddr*)&_socketSendAddress,
+		                sizeof(_socketSendAddress));
+		LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "send");
+		bytesRemaining -= length;
+		dataPointer += length;
+	}
+
+	LogVerbose(LogCategory::NETWORK, "Encoded frame buffer of size %d bytes sent as %d packets. (%d bytes per packet)", dataLength, packetsCount, _socketSendBufferSize);
 }
 
 void Program::UpdateTextures()
 {
-	std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
-	_transcoder->FeedFrame(img);
 	try
 	{
-		auto pk = _transcoder->NextPacket();
-		_transcoder->FeedPacket(pk.get());
-
-		try
-		{
-			auto imgDec = _transcoder->NextImage();
-			_texture->UploadData(&imgDec->GetRGBBuffer()->at(0));
-		}
-		catch (Codec::DecoderException de)
-		{
-
-		}
+		auto image = _transcoder->NextImage();
+		_texture->UploadData(&image->GetRGBBuffer()->at(0));
 	}
-	catch (Codec::EncoderException ee)
+	catch (Codec::DecoderException de)
 	{
 
 	}

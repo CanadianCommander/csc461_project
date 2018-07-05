@@ -41,8 +41,8 @@ enum class LogCategory
 #define Log(level, channels, format, args...) ((void)0)
 #define SetLogPriority() ((void)0)
 #define SetLogCategory() ((void)0)
-#define LogSDL(TEXT) ((void)0)
-#define LogVerboseOrElseCritical(category, predicate, text) ((void)0)
+#define LogSDL(text) ((void)0)
+#define LogVerboseOrCritical(category, predicate, text) ((void)0)
 #else
 #define Log(level, category, format, args...) \
     LogReal(level, category, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##args)
@@ -67,18 +67,18 @@ extern const char* g_sdlError;
     {                                                                                               \
         LogVerbose(LogCategory::ALL, #TEXT ": %s.", toStatus(true));                                \
     }                                                                                               \
-}
+}                                                                                                   \
 
 #define LogVerboseOrCritical(category, predicate, text)                                             \
 {                                                                                                   \
     if (predicate)                                                                                  \
     {                                                                                               \
-         LogVerbose(category, #text ": %s.", toStatus(true));                                       \
+        LogVerbose(category, #text ": %s.", toStatus(true));                                        \
     } else                                                                                          \
-     {                                                                                              \
-         LogCritical(category, #text ": %s.", toStatus(false));                                     \
-      }                                                                                             \
-  }
+    {                                                                                               \
+        LogCritical(category, #text ": %s.", toStatus(false));                                      \
+    }                                                                                               \
+}                                                                                                   \
 
 #endif
 

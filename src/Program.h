@@ -5,6 +5,9 @@
 #include <memory>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <math.h>
+#include <future>
 
 using hclock = std::chrono::high_resolution_clock;
 using timepoint = std::chrono::high_resolution_clock::time_point;
@@ -23,9 +26,9 @@ class Program
 
 public:
 #ifndef NDEBUG
-	explicit Program(LogPriority logPriority = LogPriority::VERBOSE, LogCategory logCategory = LogCategory::ALL);
+	explicit Program(bool isSender, LogPriority logPriority = LogPriority::VERBOSE, LogCategory logCategory = LogCategory::ALL);
 #else
-	Program();
+	Program(bool isSender);
 #endif
 	~Program();
 	void Loop();
@@ -55,6 +58,12 @@ private:
 	ScreenCapture _screenCapture;
 	std::shared_ptr<Codec::Transcoder> _transcoder;
 	uint32_t _socketHandle;
+	struct sockaddr_in _socketAddress;
+	struct sockaddr_in _socketSendAddress;
+	std::thread _socketReceiveThread;
+	uint32_t _socketSendBufferSize = 0;
+	uint32_t _socketReceiveBufferSize = 0;
+	bool _isSender = false;
 
 	void InitializeSDL();
 	void InitializeOpenGL();
@@ -64,5 +73,6 @@ private:
 	void Draw();
 	void HandleEvents();
 	void UpdateTextures();
-
+	void SendFrameBuffer(const uint8_t* data, uint32_t dataLength);
+	static void SocketReceive(Program* program);
 };
