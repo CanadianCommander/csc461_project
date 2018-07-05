@@ -6,9 +6,9 @@
 
 namespace Codec {
 
-class Transcoder : public Encoder, public Decoder
-{
+  class Transcoder : public Encoder, public Decoder
+  {
 
-};
+  };
 
 }
