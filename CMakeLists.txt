@@ -75,6 +75,10 @@ SET(SRC_FILES
         Graphics/Shaders/ShaderProgram.cpp
 
         #io
+        IO/Args/ArgumentDecoder.cpp
+        IO/Args/ArgumentNetworkMode.cpp
+        IO/Args/ArgumentNetworkAddr.cpp
+
         IO/ScreenCapture.cpp
         IO/ImageRGB.cpp
         IO/ImageBGRA.cpp

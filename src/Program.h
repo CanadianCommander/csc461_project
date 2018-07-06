@@ -26,9 +26,9 @@ class Program
 
 public:
 #ifndef NDEBUG
-	explicit Program(bool isSender, LogPriority logPriority = LogPriority::VERBOSE, LogCategory logCategory = LogCategory::ALL);
+	explicit Program(bool isSender, std::string ipAddr, uint16_t portNum, LogPriority logPriority = LogPriority::VERBOSE, LogCategory logCategory = LogCategory::ALL);
 #else
-	Program(bool isSender);
+	Program(bool isSender, std::string ipAddr, uint16_t portNum);
 #endif
 	~Program();
 	void Loop();
@@ -64,6 +64,8 @@ private:
 	uint32_t _socketSendBufferSize = 0;
 	uint32_t _socketReceiveBufferSize = 0;
 	bool _isSender = false;
+	std::string _ipAddr;
+	uint16_t 	  _portNum;
 
 	void InitializeSDL();
 	void InitializeOpenGL();

@@ -6,10 +6,10 @@
 
 #ifndef NDEBUG
 
-Program::Program(bool isSender, LogPriority logPriority, LogCategory logCategory)
+Program::Program(bool isSender, std::string ipAddr, uint16_t portNum, LogPriority logPriority, LogCategory logCategory)
 #else
 
-Program::Program(bool isSender)
+Program::Program(bool isSender, std::string ipAddr, uint16_t portNum)
 #endif
 {
 #ifndef NDEBUG
@@ -17,6 +17,8 @@ Program::Program(bool isSender)
 	SetLogCategory(logCategory);
 #endif
 	_isSender = isSender;
+	_ipAddr = ipAddr;
+	_portNum = portNum;
 	if (!_isSender)
 	{
 		InitializeSDL();
@@ -192,7 +194,7 @@ void Program::InitializeNetwork()
 		_socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 	} else
 	{
-		_socketAddress.sin_port = htons(8080);
+		_socketAddress.sin_port = htons(_portNum);
 		_socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 	}
 
@@ -202,14 +204,19 @@ void Program::InitializeNetwork()
 	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "getsockopt");
 	status = getsockopt(_socketHandle, SOL_SOCKET, SO_RCVBUF, &_socketReceiveBufferSize, &wtf);
 	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "getsockopt");
+	// see https://linux.die.net/man/7/socket (section on, SO_SNDBUF and SO_RCVBUF )
+	_socketSendBufferSize = _socketSendBufferSize/8;
+	_socketReceiveBufferSize = _socketReceiveBufferSize/8;
 
-	status = bind(_socketHandle, (struct sockaddr*)&_socketAddress, sizeof(_socketAddress));
+	if(!_isSender){
+		status = bind(_socketHandle, (struct sockaddr*)&_socketAddress, sizeof(_socketAddress));
+	}
 	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "bind");
 
 	memset(&_socketSendAddress, 0, sizeof(_socketSendAddress));
 	_socketSendAddress.sin_family = AF_INET;
-	_socketSendAddress.sin_port = htons(8080);
-	status = inet_aton("127.0.0.1", &_socketAddress.sin_addr);
+	_socketSendAddress.sin_port = htons(_portNum);
+	status = inet_aton(_ipAddr.c_str(), &_socketAddress.sin_addr);
 	LogVerboseOrCritical(LogCategory::NETWORK, status != 0, "inet_aton");
 
 	if (!_isSender)
@@ -422,7 +429,8 @@ void Program::SendFrameBuffer(const uint8_t* data, uint32_t dataLength)
 	auto packetsCount = (uint32_t)ceil((float)dataLength / _socketSendBufferSize);
 	memcpy(header, &packetsCount, sizeof(uint32_t));
 	memcpy(header + 4, &dataLength, sizeof(uint32_t));
-	auto status = sendto(_socketHandle, header, sizeof(uint8_t) * 8, 0, (struct sockaddr*)&_socketSendAddress,
+	int status = 0;
+	status = sendto(_socketHandle, header, sizeof(uint8_t) * 8, 0, (struct sockaddr*)&_socketSendAddress,
 	                     sizeof(_socketSendAddress));
 	LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "send");
 
@@ -433,6 +441,7 @@ void Program::SendFrameBuffer(const uint8_t* data, uint32_t dataLength)
 		auto length = std::min(_socketSendBufferSize, bytesRemaining);
 		status = sendto(_socketHandle, dataPointer, length, 0, (struct sockaddr*)&_socketSendAddress,
 		                sizeof(_socketSendAddress));
+		LogVerbose(LogCategory::NETWORK, "ERRNO: %d \n", errno);
 		LogVerboseOrCritical(LogCategory::NETWORK, status != -1, "send");
 		bytesRemaining -= length;
 		dataPointer += length;
