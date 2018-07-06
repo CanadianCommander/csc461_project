@@ -92,33 +92,11 @@ Texture &Texture::operator=(const Texture &other)
 
 void Texture::UploadImage(Image* image)
 {
-	if (_handle == 0)
-	{
-//		if (_handle != 0)
-//		{
-//			glDeleteTextures(1, &_handle);
-//			LogGL("glDeleteTextures");
-//		}
+  glBindTexture(GL_TEXTURE_2D, _handle);
+  LogGL("glBindTexture");
 
-		glGenTextures(1, &_handle);
-		LogGL("glGenTextures");
-		glBindTexture(GL_TEXTURE_2D, _handle);
-		LogGL("glBindTexture");
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		LogsGL("glTexParameter");
-	}
-
-//	//TODO: This might need to be considered.
-//	int unpackAlignment = 4;
-//	glPixelStorei(GL_UNPACK_ALIGNMENT, unpackAlignment);
-//	LogGL("glPixelStore");
-
-	auto rgbData = &image->GetRGBBuffer().get()->at(0);
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbData);
+	GLvoid* rgbData = &image->GetRGBBuffer()->at(0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->GetWidth(), image->GetHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, rgbData);
 	LogGL("glTexImage2D");
 }
 
