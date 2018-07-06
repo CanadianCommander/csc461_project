@@ -319,10 +319,6 @@ void Program::Update()
 			_framesPerSecondTimer -= _oneSecondDuration;
 			_framesPerSecond = _framesCounter;
 			_framesCounter = 0;
-
-			char x[10];
-			sprintf(x, "FPS: %d", _framesPerSecond);
-			SDL_SetWindowTitle(_window, x);
 		}
 
 		HandleEvents();
