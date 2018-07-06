@@ -172,7 +172,7 @@ void Program::InitializeOpenGL()
 	std::shared_ptr<IO::Image> img = _screenCapture.GetScreenFrameBuffer();
 
 	_texture = new Graphics::Texture(img->GetWidth(), img->GetHeight(), GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
-	_texture->UploadData(img->GetRawDataPtr());
+	_texture->UploadImage(img.get());
 
 	auto textureSamplerUniformLocation = glGetUniformLocation(shaderProgram, "textureSampler");
 	LogGL("glGetUniformLocation");
@@ -216,7 +216,7 @@ void Program::InitializeNetwork()
 	memset(&_socketSendAddress, 0, sizeof(_socketSendAddress));
 	_socketSendAddress.sin_family = AF_INET;
 	_socketSendAddress.sin_port = htons(_portNum);
-	status = inet_aton(_ipAddr.c_str(), &_socketAddress.sin_addr);
+	status = inet_aton(_ipAddr.c_str(), &_socketSendAddress.sin_addr);
 	LogVerboseOrCritical(LogCategory::NETWORK, status != 0, "inet_aton");
 
 	if (!_isSender)
@@ -455,7 +455,7 @@ void Program::UpdateTextures()
 	try
 	{
 		auto image = _transcoder->NextImage();
-		_texture->UploadData(&image->GetRGBBuffer()->at(0));
+		_texture->UploadImage(image.get());
 	}
 	catch (Codec::DecoderException de)
 	{

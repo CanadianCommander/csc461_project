@@ -1,5 +1,7 @@
-
 #include "Texture.h"
+#include "../IO/Image.h"
+
+using IO::Image;
 
 namespace Graphics {
 
@@ -62,36 +64,68 @@ Texture &Texture::operator=(const Texture &other)
 	return *this;
 }
 
-void Texture::UploadData(void* data, uint8_t unpackAlignment)
+//void Texture::UploadData(void* data, uint8_t unpackAlignment)
+//{
+//	GLuint previousBoundTextureHandle;
+//
+//	glGetIntegerv(GL_TEXTURE_BINDING_2D, reinterpret_cast<GLint*>(&previousBoundTextureHandle));
+//	LogGL("glGetInteger");
+//
+//	if (previousBoundTextureHandle != _handle)
+//	{
+//		glBindTexture(GL_TEXTURE_2D, _handle);
+//		LogGL("glBindTexture");
+//	}
+//
+//	glPixelStorei(GL_UNPACK_ALIGNMENT, unpackAlignment);
+//	LogGL("glPixelStore");
+//
+//	glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, _width, _height, 0, _format, _type, data);
+//	LogGL("glTexImage2D");
+//
+//	if (previousBoundTextureHandle != _handle)
+//	{
+//		glBindTexture(GL_TEXTURE_2D, previousBoundTextureHandle);
+//		LogGL("glBindTexture");
+//	}
+//}
+
+void Texture::UploadImage(Image* image)
 {
-	GLuint previousBoundTextureHandle;
-
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, reinterpret_cast<GLint*>(&previousBoundTextureHandle));
-	LogGL("glGetInteger");
-
-	if (previousBoundTextureHandle != _handle)
+	if (_handle == 0)
 	{
+//		if (_handle != 0)
+//		{
+//			glDeleteTextures(1, &_handle);
+//			LogGL("glDeleteTextures");
+//		}
+
+		glGenTextures(1, &_handle);
+		LogGL("glGenTextures");
 		glBindTexture(GL_TEXTURE_2D, _handle);
 		LogGL("glBindTexture");
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		LogsGL("glTexParameter");
 	}
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, unpackAlignment);
-	LogGL("glPixelStore");
+//	//TODO: This might need to be considered.
+//	int unpackAlignment = 4;
+//	glPixelStorei(GL_UNPACK_ALIGNMENT, unpackAlignment);
+//	LogGL("glPixelStore");
 
-	glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, _width, _height, 0, _format, _type, data);
+	auto rgbData = &image->GetRGBBuffer().get()->at(0);
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbData);
 	LogGL("glTexImage2D");
-
-	if (previousBoundTextureHandle != _handle)
-	{
-		glBindTexture(GL_TEXTURE_2D, previousBoundTextureHandle);
-		LogGL("glBindTexture");
-	}
 }
 
-void Texture::UploadData(std::shared_ptr<std::vector<uint8_t>> data, uint8_t unpackAlignment)
-{
-	UploadData((void*)(data->data()), unpackAlignment);
-}
+//void Texture::UploadData(std::shared_ptr<std::vector<uint8_t>> data, uint8_t unpackAlignment)
+//{
+//	UploadData((void*)(data->data()), unpackAlignment);
+//}
 
 void Texture::BindTexture()
 {

@@ -21,8 +21,9 @@ public:
 
 	Texture &operator=(const Texture &other);
 
-	void UploadData(void* data, uint8_t unpackAlignment = 4);
-	void UploadData(std::shared_ptr<std::vector<uint8_t>> data, uint8_t unpackAlignment = 4);
+//	void UploadData(void* data, uint8_t unpackAlignment = 4);
+//	void UploadData(std::shared_ptr<std::vector<uint8_t>> data, uint8_t unpackAlignment = 4);
+	void UploadImage(IO::Image* image);
 	void BindTexture();
 
 	uint32_t GetWidth()
@@ -39,5 +40,6 @@ private:
 	GLint _internalFormat;
 	GLenum _format;
 	GLenum _type;
+	IO::ImageFormat _imageFormat;
 };
 }
