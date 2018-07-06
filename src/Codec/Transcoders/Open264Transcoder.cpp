@@ -2,7 +2,7 @@
 #include "Open264Transcoder.h"
 #include "../Packets/OpenH264Packet.h"
 #include "../../IO/ImageRGB.h"
-
+#include <cstring>
 #include <chrono>
 
 //clamp as that provided by std in C++17

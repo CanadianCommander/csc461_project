@@ -2,6 +2,8 @@
 #include "../Codec.h"
 #include "../../IO/ImageYUV420.h"
 #include <chrono>
+#include <algorithm>
+#include <cstring>
 
 namespace Codec {
   //general methods

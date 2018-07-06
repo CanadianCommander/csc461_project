@@ -31,8 +31,8 @@ list(APPEND LIBRARIES ${OPENGL_LIBRARIES})
 list(APPEND INCLUDE_DIRS ${OPENGL_INCLUDE_DIRS})
 
 # OpenMP
-list(APPEND LIBRARIES omp)
 if(APPLE)
+    list(APPEND LIBRARIES omp)
     add_definitions("-Xpreprocessor -fopenmp")
     # HomeBrew
     list(APPEND LINK_DIRS /usr/local/opt/libomp/lib/)

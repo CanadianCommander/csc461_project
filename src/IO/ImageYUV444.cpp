@@ -1,4 +1,5 @@
 #include "ImageYUV444.h"
+#include <cstring>
 
 namespace IO {
   ImageYUV444::ImageYUV444(uint8_t** planeData, uint32_t width, uint32_t height, uint32_t stride)
